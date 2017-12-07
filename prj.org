@@ -1,0 +1,25 @@
+* Project Planning
+** Main Objectives
+ - Clock Function
+   - Timer Interupt
+   - State storage and update
+   - Display Function
+ - Alarm Function
+ - Stopwatch Function
+** Secondary Objectives
+   - Time Setting Menu
+     - Input Interupts
+     - State Management
+     - Display Function
+* Technical Notes
+** Timing
+*** RC Oscilator
+ - Can be callibarated to be pretty accurate
+ - Can be set as system clock
+   This is probably how I will need to set it to get the accurate clk signal to the Timer/Counter internally
+*** Clk I/O
+ - Clock line sent to timer
+ - Does this also scale with the cpu prescaling?
+*** Timer/Counter 16-bit
+ - Can Source the system clock as selected by the CPU. (See the Clk I/O)
+ - CTC mode will allow for finer calibration

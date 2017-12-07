@@ -1,0 +1,50 @@
+<ASSEMBLER_INFO>
+ <VERSION>2.2.7</VERSION>
+ <DEVICE>"ATmega328P"</DEVICE>
+ <WORKING_DIR>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test-disp</WORKING_DIR>
+ <INCLUDE_PATH>
+  <DIR>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc</DIR>
+  <DIR>..\include</DIR>
+  <DIR>C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avrassembler\Include</DIR>
+  <DIR></DIR>
+ </INCLUDE_PATH>
+ <SOURCE_FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\disp\disp.asm</SOURCE_FILE>
+ <INCLUDED_FILES>
+  <FILE>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m328pdef.inc</FILE>
+  <FILE>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m328Pdef.inc</FILE>
+  <FILE>..\include\roanlib.asm</FILE>
+  <FILE>..\include\LCD-lib.asm</FILE>
+ </INCLUDED_FILES>
+ <OBJECT_FILES>
+  <FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test-disp\ca_final.obj</FILE>
+ </OBJECT_FILES>
+ <HEX_FILES>
+  <FILE>ca_final.hex</FILE>
+ </HEX_FILES>
+ <OUTPUT_FILES>
+  <FILE>ca_final.map</FILE>
+  <FILE>ca_final.lss</FILE>
+ </OUTPUT_FILES>
+ <LABELS>
+  <RESET><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\disp\disp.asm</FILE><LINE>63</LINE></RESET>
+  <str_a><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\disp\disp.asm</FILE><LINE>22</LINE></str_a>
+  <lcd_init_4d><FILE>..\include\LCD-lib.asm</FILE><LINE>130</LINE></lcd_init_4d>
+  <delayTx1mS><FILE>..\include\LCD-lib.asm</FILE><LINE>372</LINE></delayTx1mS>
+  <lcd_write_4><FILE>..\include\LCD-lib.asm</FILE><LINE>317</LINE></lcd_write_4>
+  <delayTx1uS><FILE>..\include\LCD-lib.asm</FILE><LINE>410</LINE></delayTx1uS>
+  <lcd_write_instruction_4d><FILE>..\include\LCD-lib.asm</FILE><LINE>297</LINE></lcd_write_instruction_4d>
+  <lcd_write_string_4d><FILE>..\include\LCD-lib.asm</FILE><LINE>242</LINE></lcd_write_string_4d>
+  <lcd_write_string_4d_01><FILE>..\include\LCD-lib.asm</FILE><LINE>258</LINE></lcd_write_string_4d_01>
+  <lcd_write_string_4d_02><FILE>..\include\LCD-lib.asm</FILE><LINE>270</LINE></lcd_write_string_4d_02>
+  <lcd_write_character_4d><FILE>..\include\LCD-lib.asm</FILE><LINE>282</LINE></lcd_write_character_4d>
+  <delay1uS><FILE>..\include\LCD-lib.asm</FILE><LINE>425</LINE></delay1uS>
+  <delayYx1mS><FILE>..\include\LCD-lib.asm</FILE><LINE>356</LINE></delayYx1mS>
+  <delay1mS><FILE>..\include\LCD-lib.asm</FILE><LINE>387</LINE></delay1mS>
+  <delay1mS_01><FILE>..\include\LCD-lib.asm</FILE><LINE>393</LINE></delay1mS_01>
+  <lcd_write_string_4d_mem><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\disp\disp.asm</FILE><LINE>30</LINE></lcd_write_string_4d_mem>
+  <lcd_write_string_4d_mem_01><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\disp\disp.asm</FILE><LINE>46</LINE></lcd_write_string_4d_mem_01>
+  <lcd_write_string_4d_mem_02><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\disp\disp.asm</FILE><LINE>58</LINE></lcd_write_string_4d_mem_02>
+  <str_b><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\disp\disp.asm</FILE><LINE>87</LINE></str_b>
+  <wait_here><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\disp\disp.asm</FILE><LINE>84</LINE></wait_here>
+ </LABELS>
+</ASSEMBLER_INFO>

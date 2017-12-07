@@ -1,0 +1,211 @@
+
+AVRA   Ver. 1.3.0 disp.asm Thu Dec 07 17:23:49 2017
+
+
+         ;;; Includes
+          .list
+          .include "roanlib.asm"        ; Handy Fxns
+         ;;; roanlib.asm ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         ;
+         ;  A Gathering of handy macros, not necessarily authored by me.
+         ;
+         ;;;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         
+           ;; Standard Stack Pointer Initialization
+            .macro init_sp
+          	  ldi r16,low(RAMEND)
+          	  out SPL,r16
+          	  ldi r16,high(RAMEND)
+          	  out SPH,r16
+          	.endmacro
+         
+           ;; Converts number in register to a hex digit 0-F or '#' if out of range
+           ;; Params:  @0 register to convert. 16 <= r <= 31
+           ;; Result:  Converted number -> @0
+          .macro hex_to_letter
+            cpi @0, $0A
+            brge geA
+            subi @0, -0x30
+          geA:
+            cpi @0, $10
+            brge out_of_range
+            subi @0, -0x37
+          out_of_range:
+            ldi @0, '#'
+          .endmacro
+         
+         
+         ; ---------------------------------------------------------------------------
+         ; Name:     lcd_write_string_4d_mem
+         ; Purpose:  display a string of characters on the LCD
+         ; Entry:    XH and XL pointing to the start of the string
+         ;           (temp_r16) contains the desired DDRAM address at which to start the display
+         ; Exit:     no parameters
+         ; Notes:    the string must end with a null (0)
+         ;           uses time delays instead of checking the busy flag
+         
+          .macro import_lcd_write_string_4d_mem
+          lcd_write_string_4d_mem:
+         ; preserve registers
+              push    XH                              ; preserve pointer registers
+              push    XL
+          
+         ; STEP NOT NEEDED ~fix up the pointers for use with the 'lpm' instruction~
+             ;; lsl     XL                              ; shift the pointer one bit left for the lpm instruction
+             ;; rol     XH
+          
+         ; set up the initial DDRAM address
+              ori     temp_r16, lcd_SetCursor     ; convert the plain address to a set cursor instruction
+              call   lcd_write_instruction_4d     ; set up the first DDRAM address
+              ldi     temp_r16, 80                ; 40 uS delay (min)
+              call    delayTx1uS
+          
+         ; write the string of characters
+          lcd_write_string_4d_mem_01:
+              ld      temp_r16, X+                        ; get a character
+              cpi     temp_r16,  0                        ; check for end of string
+              breq    lcd_write_string_4d_mem_02          ; done
+          
+         ; arrive here if this is a valid character
+              call    lcd_write_character_4d          ; display the character
+              ldi     temp_r16, 80                        ; 40 uS delay (min)
+              call    delayTx1uS
+              rjmp    lcd_write_string_4d_mem_01          ; not done, send another character
+          
+         ; arrive here when all characters in the message have been sent to the LCD module
+          lcd_write_string_4d_mem_02:
+              pop     XL                              ; restore pointer registers
+              pop     XH
+              ret
+          .endmacro
+         
+         	;; Display a string from code memory
+         	;; Parameters are string_pointer, {lcd_lineone, lcd_linetwo}
+         	;; Source: Mick Walters
+          	  .macro disp_from_cm
+          	    ldi ZH, high(@0) ; Z = Code/Flash memory address of
+          	    ldi ZL, low(@0) ; message to be displayed
+          	    ldi r16, @1 ; r16 = line 1 LCD address
+          	    call lcd_write_string_4d
+          	  .endmacro
+         
+         ;; Display a string from SRAM
+         ;; Parameters are string_pointer, {lcd_lineone, lcd_linetwo}
+         ;; Source: Mick Walters
+             .macro disp_from_sram
+               ldi XH, high(@0) ; Z = Code/Flash memory address of
+               ldi XL, low(@0) ; message to be displayed
+               ldi r16, @1 ; r16 = line 1 LCD address
+               call lcd_write_string_4d_mem
+             .endmacro
+         
+         ;;; Definitions
+            .def temp_r16=r16
+         
+         ;;; Macros
+         
+         ;;; Interupt Vectors
+            .org 0x0000
+C:000000 940c 00ea                jmp RESET
+         
+         ;;; Good
+         ;;; Startup Routine
+           ;; .cseg
+            .org INT_VECTORS_SIZE         ;TODO: Use this one instead and check different
+         
+         		;;; Data!
+          	str_a:  .db "Hello World!", 0, 0
+C:000034 48656C6C6F20576F726C64210000
+         
+         ;;; Display Init
+          	  .list
+         
+           ;; Write from SRAM
+          lcd_write_string_4d_mem:
+         ; preserve registers
+C:0000d6 93bf          push    XH                              ; preserve pointer registers
+C:0000d7 93af          push    XL
+         
+         ; STEP NOT NEEDED ~fix up the pointers for use with the 'lpm' instruction~
+             ;; lsl     XL                              ; shift the pointer one bit left for the lpm instruction
+             ;; rol     XH
+         
+         ; set up the initial DDRAM address
+C:0000d8 6800          ori     temp_r16, lcd_SetCursor     ; convert the plain address to a set cursor instruction
+C:0000d9 940e 009b     call   lcd_write_instruction_4d     ; set up the first DDRAM address
+C:0000db e500          ldi     temp_r16, 80                ; 40 uS delay (min)
+C:0000dc 940e 00cc     call    delayTx1uS
+         
+         ; write the string of characters
+          lcd_write_string_4d_mem_01:
+C:0000de 910d          ld      temp_r16, X+                        ; get a character
+C:0000df 3000          cpi     temp_r16,  0                        ; check for end of string
+C:0000e0 f031          breq    lcd_write_string_4d_mem_02          ; done
+         
+         ; arrive here if this is a valid character
+C:0000e1 940e 0093     call    lcd_write_character_4d          ; display the character
+C:0000e3 e500          ldi     temp_r16, 80                        ; 40 uS delay (min)
+C:0000e4 940e 00cc     call    delayTx1uS
+C:0000e6 cff7          rjmp    lcd_write_string_4d_mem_01          ; not done, send another character
+         
+         ; arrive here when all characters in the message have been sent to the LCD module
+          lcd_write_string_4d_mem_02:
+C:0000e7 91af          pop     XL                              ; restore pointer registers
+C:0000e8 91bf          pop     XH
+C:0000e9 9508          ret
+         
+          RESET:
+         ;;; Init SP
+C:0000ea   +    init_sp
+C:0000ea ef0f      ldi r16,low(RAMEND)
+C:0000eb bf0d      out SPL,r16
+C:0000ec e008      ldi r16,high(RAMEND)
+C:0000ed bf0e      out SPH,r16
+         
+C:0000ee 940e 003b 	  call lcd_init_4d              ; Initialize LCD display for 4-bit interface
+         
+C:0000f0 e001        ldi temp_r16, lcd_Clear
+C:0000f1 940e 009b   call lcd_write_instruction_4d
+         
+C:0000f3   +    disp_from_cm str_a, lcd_LineOne
+C:0000f3 e0f0      ldi ZH, high(str_a) 
+
+C:0000f4 e3e4      ldi ZL, low(str_a) 
+
+C:0000f5 e000      ldi r16, lcd_LineOne 
+
+C:0000f6 940e 007d call lcd_write_string_4d
+         
+C:0000f8 e0a0        ldi XL, low(str_b)
+C:0000f9 e0b1        ldi XH, high(str_b)
+C:0000fa e30a        ldi temp_r16, $3A
+C:0000fb 930d        st X+, temp_r16
+C:0000fc e209        ldi temp_r16, $29
+C:0000fd 930d        st X+, temp_r16
+C:0000fe e000        ldi temp_r16, $00
+C:0000ff 930d        st X+, temp_r16
+C:000100 e000        ldi temp_r16, $00
+C:000101 930d        st X+, temp_r16
+C:000102   +    disp_from_sram str_b, lcd_LineTwo
+C:000102 e0b1      ldi XH, high(str_b) 
+
+C:000103 e0a0      ldi XL, low(str_b) 
+
+C:000104 e400      ldi r16, lcd_LineTwo 
+
+C:000105 940e 00d6 call lcd_write_string_4d_mem
+         
+           ;; sleep
+           ;; nop
+C:000107 940c 0107 wait_here:  jmp wait_here
+         
+            .dseg
+D:000100    str_b:   .byte 4
+
+
+Segment usage:
+   Code      :       215 words (430 bytes)
+   Data      :         4 bytes
+   EEPROM    :         0 bytes
+
+Assembly completed with no errors.

@@ -1,0 +1,53 @@
+<ASSEMBLER_INFO>
+ <VERSION>2.2.7</VERSION>
+ <DEVICE>"ATmega328P"</DEVICE>
+ <WORKING_DIR>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test-timer</WORKING_DIR>
+ <INCLUDE_PATH>
+  <DIR>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc</DIR>
+  <DIR>..\include</DIR>
+  <DIR>C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avrassembler\Include</DIR>
+  <DIR></DIR>
+ </INCLUDE_PATH>
+ <SOURCE_FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm</SOURCE_FILE>
+ <INCLUDED_FILES>
+  <FILE>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m328pdef.inc</FILE>
+  <FILE>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m328Pdef.inc</FILE>
+  <FILE>..\include\roanlib.asm</FILE>
+  <FILE>..\include\LCD-lib_roan.asm</FILE>
+  <FILE>..\include\LCD-lib.asm</FILE>
+ </INCLUDED_FILES>
+ <OBJECT_FILES>
+  <FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test-timer\ca_final.obj</FILE>
+ </OBJECT_FILES>
+ <HEX_FILES>
+  <FILE>ca_final.hex</FILE>
+ </HEX_FILES>
+ <OUTPUT_FILES>
+  <FILE>ca_final.map</FILE>
+  <FILE>ca_final.lss</FILE>
+ </OUTPUT_FILES>
+ <LABELS>
+  <RESET><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm</FILE><LINE>69</LINE></RESET>
+  <TIMER1_OVR><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm</FILE><LINE>43</LINE></TIMER1_OVR>
+  <counter_str><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm</FILE><LINE>27</LINE></counter_str>
+  <lcd_init_4d><FILE>..\include\LCD-lib.asm</FILE><LINE>130</LINE></lcd_init_4d>
+  <delayTx1mS><FILE>..\include\LCD-lib.asm</FILE><LINE>372</LINE></delayTx1mS>
+  <lcd_write_4><FILE>..\include\LCD-lib.asm</FILE><LINE>317</LINE></lcd_write_4>
+  <delayTx1uS><FILE>..\include\LCD-lib.asm</FILE><LINE>410</LINE></delayTx1uS>
+  <lcd_write_instruction_4d><FILE>..\include\LCD-lib.asm</FILE><LINE>297</LINE></lcd_write_instruction_4d>
+  <lcd_write_string_4d><FILE>..\include\LCD-lib.asm</FILE><LINE>242</LINE></lcd_write_string_4d>
+  <lcd_write_string_4d_01><FILE>..\include\LCD-lib.asm</FILE><LINE>258</LINE></lcd_write_string_4d_01>
+  <lcd_write_string_4d_02><FILE>..\include\LCD-lib.asm</FILE><LINE>270</LINE></lcd_write_string_4d_02>
+  <lcd_write_character_4d><FILE>..\include\LCD-lib.asm</FILE><LINE>282</LINE></lcd_write_character_4d>
+  <delay1uS><FILE>..\include\LCD-lib.asm</FILE><LINE>425</LINE></delay1uS>
+  <delayYx1mS><FILE>..\include\LCD-lib.asm</FILE><LINE>356</LINE></delayYx1mS>
+  <delay1mS><FILE>..\include\LCD-lib.asm</FILE><LINE>387</LINE></delay1mS>
+  <delay1mS_01><FILE>..\include\LCD-lib.asm</FILE><LINE>393</LINE></delay1mS_01>
+  <lcd_write_string_4d_mem><FILE>..\include\LCD-lib_roan.asm</FILE><LINE>12</LINE></lcd_write_string_4d_mem>
+  <lcd_write_string_4d_mem_01><FILE>..\include\LCD-lib_roan.asm</FILE><LINE>28</LINE></lcd_write_string_4d_mem_01>
+  <lcd_write_string_4d_mem_02><FILE>..\include\LCD-lib_roan.asm</FILE><LINE>40</LINE></lcd_write_string_4d_mem_02>
+  <TIMER1_OVR_CTR_OVR><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm</FILE><LINE>49</LINE></TIMER1_OVR_CTR_OVR>
+  <TIMER1_OVR_DISP><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm</FILE><LINE>51</LINE></TIMER1_OVR_DISP>
+  <sleep_loop><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm</FILE><LINE>110</LINE></sleep_loop>
+ </LABELS>
+</ASSEMBLER_INFO>
