@@ -149,6 +149,9 @@
     <Compile Include="test\disp\disp.asm">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="test\div\div.asm">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="test\timer\timer.asm">
       <SubType>Code</SubType>
     </Compile>
@@ -158,6 +161,7 @@
     <Folder Include="src\" />
     <Folder Include="test\" />
     <Folder Include="test\disp\" />
+    <Folder Include="test\div\" />
     <Folder Include="test\timer\" />
   </ItemGroup>
   <ItemGroup>
