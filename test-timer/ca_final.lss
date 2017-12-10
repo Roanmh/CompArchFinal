@@ -1,23 +1,22 @@
 
-AVRASM ver. 2.2.7  C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm Thu Dec 07 19:13:44 2017
+AVRASM ver. 2.2.7  C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm Sun Dec 10 00:30:47 2017
 
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m328pdef.inc'
 C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm(3): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m328Pdef.inc'
 C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm(5): Including file '..\include\roanlib.asm'
-C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm(38): Including file '..\include\LCD-lib_roan.asm'
+C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm(41): Including file '..\include\LCD-lib_roan.asm'
 ..\include\LCD-lib_roan.asm(1): Including file '..\include\LCD-lib.asm'
 ..\include\LCD-lib.asm(77): warning: .def: 'temp_r16' redefinition (r16->r16)
 ..\include\LCD-lib_roan.asm(1): '..\include\LCD-lib.asm' included form here
-C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm(38): '..\include\LCD-lib_roan.asm' included form here
+C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm(41): '..\include\LCD-lib_roan.asm' included form here
 ..\include\LCD-lib.asm(77): warning: Register r16 already defined by the .DEF directive
 ..\include\LCD-lib_roan.asm(1): '..\include\LCD-lib.asm' included form here
-C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm(38): '..\include\LCD-lib_roan.asm' included form here
+C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm(41): '..\include\LCD-lib_roan.asm' included form here
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m328pdef.inc'
 C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm(3): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m328Pdef.inc'
 C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm(5): Including file '..\include\roanlib.asm'
-C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm(38): Including file '..\include\LCD-lib_roan.asm'
+C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm(41): Including file '..\include\LCD-lib_roan.asm'
 ..\include\LCD-lib_roan.asm(1): Including file '..\include\LCD-lib.asm'
-C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm(31): warning: .org 0x34 in .dseg is below start of RAM at 0x100
                                  
                                  ;;; Includes
                                  
@@ -1016,6 +1015,25 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test
                                  	  out SPH,r16
                                  	.endmacro
                                  
+                                   ;; Int Division: Returns floor(@0/@1) of two bytes in @0 register.
+                                   ;; Input:  0 - [Output Only]
+                                   ;;         1 - Dividend Register
+                                   ;;         2 - Divisor Register
+                                   ;; Output: 0 - Quotient Register
+                                   ;;         1 - Remainder Register
+                                   ;;         2 - [Input Only]
+                                   .macro int_div
+                                     clr @0
+                                 int_div_loop:
+                                     cp @1, @2
+                                     brlt int_div_done
+                                     inc @0
+                                     sub @1, @2
+                                     jmp int_div_loop
+                                 int_div_done:
+                                   .endmacro
+                                 
+                                 
                                    ;; Converts number in register to a hex digit 0-F or '#' if out of range
                                    ;; Params:  @0 register to convert. 16 <= r <= 31
                                    ;; Result:  Converted number -> @0
@@ -1033,6 +1051,75 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test
                                    ldi @0, '#'
                                  hex_to_letter_done:
                                  .endmacro
+                                 
+                                   ;; Converts number in register to two decimal digits, zero padded
+                                   ;;   or '##' if out of range
+                                   ;; Params:  0 - Register to convert. 16 <= r <= 31
+                                   ;;          1 - Address to store at in SRAM (needs 3 bytes for storing.)
+                                   ;;          2 - Stratch Regiter
+                                   ;; Result:  Decimal String -> Address pointed to by @1
+                                 .macro hex_to_dec_str_two_dig
+                                   push temp_r16
+                                     cpi @0, $64
+                                     brge hex_to_letter_out_of_range
+                                     ldi temp_r16, 10
+                                     int_div @2, @0, temp_r16
+                                     subi @2, -0x30                ; Tens Place
+                                     subi @0, -0x30                ; Ones Place
+                                     jmp hex_to_letter_store
+                                 hex_to_letter_out_of_range:
+                                     ldi @0, '#'
+                                     ldi @2, '#'
+                                 hex_to_letter_store:
+                                     push XL
+                                       push XH
+                                         ldi XH, high(@1)        ; Z = Code/Flash memory address of
+                                         ldi XL, low(@1)         ; Message to be displayed
+                                         st X+, @2
+                                         st X+, @0
+                                         clr temp_r16
+                                         st X, temp_r16          ; Terminating Zero
+                                       pop XH
+                                     pop XL
+                                   pop temp_r16
+                                 .endmacro
+                                 
+                                   ;; Increment a number of counters that represent readable time values
+                                   ;; Input: Requires named registers: hun_sec_reg, sec_reg, min_reg, hour_reg
+                                   .macro incr_time
+                                     cpi hund_sec_reg, 99
+                                     brge incr_time_carry_sec
+                                     inc hund_sec_reg
+                                     jmp incr_time_end
+                                 incr_time_carry_sec:
+                                     cpi sec_reg, 59
+                                     brge incr_time_carry_min
+                                     clr hund_sec_reg
+                                     inc sec_reg
+                                     jmp incr_time_end
+                                 incr_time_carry_min:
+                                     cpi min_reg, 59
+                                     brge incr_time_carry_hour
+                                     clr sec_reg
+                                     inc min_reg
+                                     jmp incr_time_end
+                                 incr_time_carry_hour:
+                                     cpi min_reg, 23
+                                     brge incr_time_overflow
+                                     clr min_reg
+                                     inc hour_reg
+                                     jmp incr_time_end
+                                 incr_time_overflow:
+                                     clr hour_reg
+                                 incr_time_end:
+                                   .endmacro
+                                 
+                                   .macro store_time_val
+                                   	load_addr @0, @1
+                                 	  st @0+, temp_r16
+                                 	  ldi temp_r16, $00
+                                 	  st @0, temp_r16
+                                   .endmacro
                                  
                                  
                                  ; ---------------------------------------------------------------------------
@@ -1108,7 +1195,11 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test
                                  
                                  ;;; Definitions
                                    .def temp_r16=r16
-                                   .def interupt_ctr=r17
+                                   .def temp_r17=r17
+                                   .def hund_sec_reg=r18
+                                   .def sec_reg=r19
+                                   .def min_reg=r20
+                                   .def hour_reg=r21
                                  
                                  
                                  ;;; Macros
@@ -1116,22 +1207,21 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test
                                    ;; .macro display_num
                                  
                                  
+                                 	;;; Static Variable Planning
+                                 	.dseg
+000100                           sec_str:  .byte 2          ; Counter string w/ null space
+                                 
+                                 
                                  ;;; Interupt Vectors
+                                   .cseg
                                    .org 0x0000
-000000 940c 00ec                                jmp RESET
+000000 940c 0121                                jmp RESET
                                    .org 0x001A                  ; This is the tiemer interupt vector.
-00001a 940c 00cb                                jmp TIMER1_OVR
-                                 
-                                 
-                                 ;;; Static Variable Planning
-                                   .dseg
-000100                           counter_str:  .byte 2          ; Counter string w/ null space
+00001a 940c 00e3                                jmp TIMER1_OVR
                                  
                                  
                                  ;;; Beginning code above interupt vectors
                                    .org INT_VECTORS_SIZE
-                                 
-                                 
                                  ;;; Functions
                                    .cseg                         ; TODO: Why does this get rid of branch length errors?
                                    ;; Display Init
@@ -1140,38 +1230,65 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test
                                  ;;; Timer ISR
                                    .cseg
                                  TIMER1_OVR:
-                                   ;; Note: Not storing Stat Reg because I am lazy and know it does not matter in this case
-0000cb 301f                        cpi interupt_ctr, $0F
-0000cc f019                        breq TIMER1_OVR_CTR_OVR
-0000cd 9513                        inc interupt_ctr
-0000ce 940c 00d1                   jmp	TIMER1_OVR_DISP
-                                 TIMER1_OVR_CTR_OVR:
-0000d0 2711                        clr interupt_ctr
-                                 TIMER1_OVR_DISP:
-0000d1 e000                        ldi temp_r16, $00
-0000d2 6800                        ori temp_r16, lcd_SetCursor     ; convert the plain address to a set cursor instruction
-0000d3 940e 007c                   call lcd_write_instruction_4d
+0000e3 3623
+0000e4 f41c
+0000e5 9523
+0000e6 940c 00fb
+0000e8 333b
+0000e9 f424
+0000ea 2722
+0000eb 9533
+0000ec 940c 00fb
+0000ee 334b
+0000ef f424
+0000f0 2733
+0000f1 9543
+0000f2 940c 00fb
+0000f4 3147
+0000f5 f424
+0000f6 2744
+0000f7 9553
+0000f8 940c 00fb
+0000fa 2755                        incr_time
+0000fb 930f
+0000fc 3624
+0000fd f464
+0000fe e00a
+0000ff 2711
+000100 1720
+000101 f024
+000102 9513
+000103 1b20
+000104 940c 0100
+000106 5d10
+000107 5d20
+000108 940c 010c
+00010a e223
+00010b e213
+00010c 93af
+00010d 93bf
+00010e e0b1
+00010f e0a0
+000110 931d
+000111 932d
+000112 2700
+000113 930c
+000114 91bf
+000115 91af
+000116 910f                        hex_to_dec_str_two_dig hund_sec_reg, sec_str, temp_r17
                                  
-0000d5 2f01                        mov temp_r16, interupt_ctr
-0000d6 300a
-0000d7 f41c
-0000d8 5d00
-0000d9 940c 00e1
-0000db 3100
-0000dc f41c
-0000dd 5c09
-0000de 940c 00e1
-0000e0 e203                        hex_to_letter temp_r16
-0000e1 e0a0
-0000e2 e0b1                        load_addr X, counter_str
-0000e3 930d                        st X+, temp_r16
-0000e4 e000                        ldi temp_r16, $00
-0000e5 930c                        st X, temp_r16
-0000e6 e0b1
-0000e7 e0a0
-0000e8 e000
-0000e9 940e 00b7                   disp_from_sram counter_str, lcd_LineOne
-0000eb 9518                        reti
+000117 e000                        ldi temp_r16, $00
+000118 6800                        ori temp_r16, lcd_SetCursor     ; convert the plain address to a set cursor instruction
+000119 940e 0094                   call lcd_write_instruction_4d
+                                 
+                                   ;; mov temp_r16, hund_sec_reg
+                                   ;; hex_to_letter temp_r16
+                                   ;; store_time_val X, sec_str
+00011b e0b1
+00011c e0a0
+00011d e000
+00011e 940e 00cf                   disp_from_sram sec_str, lcd_LineOne
+000120 9518                        reti
                                  
                                  
                                  
@@ -1179,10 +1296,10 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test
                                    .cseg
                                  RESET:
                                  ;;; Init SP
-0000ec ef0f
-0000ed bf0d
-0000ee e008
-0000ef bf0e                        init_sp
+000121 ef0f
+000122 bf0d
+000123 e008
+000124 bf0e                        init_sp
                                    ;ldi r16,low(RAMEND)
                                    ;out SPL,r16
                                    ;ldi r16,high(RAMEND)
@@ -1194,38 +1311,41 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test
                                    .equ wgm_hi = (00 << WGM12)   ; Currently set to "Normal" Mode
                                    .equ wgo_lo = (00 << WGM10)
                                    ;; Control Registers
-0000f0 e000                        ldi temp_r16, $00
-0000f1 9300 0080                   sts TCCR1A, temp_r16
+000125 e000                        ldi temp_r16, $00
+000126 9300 0080                   sts TCCR1A, temp_r16
                                  
-0000f3 e009                        ldi temp_r16, (011 << CS10)   ; Clock Source (Curr: x1 Prescale)
-0000f4 9300 0081                   sts TCCR1B, temp_r16
+000128 e003                        ldi temp_r16, (0b011 << CS10)   ; Clock Source (Curr: x1 Prescale)
+000129 9300 0081                   sts TCCR1B, temp_r16
                                  
-0000f6 e000                        ldi temp_r16, $00
-0000f7 9300 0082                 	sts TCCR1C, temp_r16
+00012b e000                        ldi temp_r16, $00
+00012c 9300 0082                 	sts TCCR1C, temp_r16
                                  
                                    ;; Interupt Mask
-0000f9 e001                        ldi temp_r16, (1 << TOIE1)
-0000fa 9300 006f                   sts TIMSK1, temp_r16
+00012e e001                        ldi temp_r16, (1 << TOIE1)
+00012f 9300 006f                   sts TIMSK1, temp_r16
                                  
                                  
-0000fc 940e 001c                   call lcd_init_4d              ; Initialize LCD display for 4-bit interface
+000131 940e 0034                   call lcd_init_4d              ; Initialize LCD display for 4-bit interface
                                  
                                  	;; Clear Display Instruction
-0000fe e001                        ldi temp_r16, lcd_Clear       ; r16 = clear display instruction
-0000ff 940e 007c                   call lcd_write_instruction_4d
+000133 e001                        ldi temp_r16, lcd_Clear       ; r16 = clear display instruction
+000134 940e 0094                   call lcd_write_instruction_4d
                                  
                                  
                                  ;;; Initialize Counter
-000101 2711                        clr interupt_ctr
+000136 2722                        clr hund_sec_reg
+000137 2733                        clr sec_reg
+000138 2744                        clr min_reg
+000139 2755                        clr hour_reg
                                  
                                  
                                  ;;; Enable Interupts
-000102 9478                        sei                           ; Enable those interupts
+00013a 9478                        sei                           ; Enable those interupts
                                  sleep_loop:
                                    ;; Note: Trying out a more simple wait loop for now because sleep needs a more complex implementation
                                    ;; sleep                         ; Sleep becuase ISR handles everything now
                                    ;; Note: will enter sleep before any pending interrupt(s)
-000103 940c 0103                   jmp sleep_loop                ; Because return from the interrupt will advance the PC
+00013b 940c 013b                   jmp sleep_loop                ; Because return from the interrupt will advance the PC
 
 
 RESOURCE USE INFORMATION
@@ -1243,40 +1363,40 @@ counted separately from r26..r31 here.
 .dseg memory usage only counts static data declared with .byte
 
 "ATmega328P" register use summary:
-x  :   3 y  :   0 z  :   1 r0 :   0 r1 :   0 r2 :   0 r3 :   0 r4 :   0 
+x  :   4 y  :   0 z  :   1 r0 :   0 r1 :   0 r2 :   0 r3 :   0 r4 :   0 
 r5 :   0 r6 :   0 r7 :   0 r8 :   0 r9 :   0 r10:   0 r11:   0 r12:   0 
-r13:   0 r14:   0 r15:   0 r16:  67 r17:   5 r18:   0 r19:   0 r20:   0 
-r21:   0 r22:   0 r23:   0 r24:   0 r25:   0 r26:   4 r27:   4 r28:   5 
+r13:   0 r14:   0 r15:   0 r16:  65 r17:   5 r18:  10 r19:   4 r20:   5 
+r21:   3 r22:   0 r23:   0 r24:   0 r25:   0 r26:   6 r27:   6 r28:   5 
 r29:   5 r30:   3 r31:   3 
-Registers used: 10 out of 35 (28.6%)
+Registers used: 14 out of 35 (40.0%)
 
 "ATmega328P" instruction use summary:
 .lds  :   0 .sts  :   0 adc   :   0 add   :   0 adiw  :   0 and   :   0 
 andi  :   0 asr   :   0 bclr  :   0 bld   :   0 brbc  :   0 brbs  :   0 
-brcc  :   0 brcs  :   0 break :   0 breq  :   3 brge  :   2 brhc  :   0 
-brhs  :   0 brid  :   0 brie  :   0 brlo  :   0 brlt  :   0 brmi  :   0 
+brcc  :   0 brcs  :   0 break :   0 breq  :   2 brge  :   5 brhc  :   0 
+brhs  :   0 brid  :   0 brie  :   0 brlo  :   0 brlt  :   1 brmi  :   0 
 brne  :   4 brpl  :   0 brsh  :   0 brtc  :   0 brts  :   0 brvc  :   0 
 brvs  :   0 bset  :   0 bst   :   0 call  :  41 cbi   :  10 cbr   :   0 
-clc   :   0 clh   :   0 cli   :   0 cln   :   0 clr   :   2 cls   :   0 
-clt   :   0 clv   :   0 clz   :   0 com   :   0 cp    :   0 cpc   :   0 
-cpi   :   5 cpse  :   0 dec   :   2 eor   :   0 fmul  :   0 fmuls :   0 
-fmulsu:   0 icall :   0 ijmp  :   0 in    :   0 inc   :   1 jmp   :   6 
-ld    :   1 ldd   :   0 ldi   :  41 lds   :   0 lpm   :   1 lsl   :   1 
-lsr   :   0 mov   :   1 movw  :   0 mul   :   0 muls  :   0 mulsu :   0 
-neg   :   0 nop   :   0 or    :   0 ori   :   3 out   :   2 pop   :   8 
-push  :   8 rcall :   0 ret   :  11 reti  :   1 rjmp  :   2 rol   :   1 
+clc   :   0 clh   :   0 cli   :   0 cln   :   0 clr   :  10 cls   :   0 
+clt   :   0 clv   :   0 clz   :   0 com   :   0 cp    :   1 cpc   :   0 
+cpi   :   7 cpse  :   0 dec   :   2 eor   :   0 fmul  :   0 fmuls :   0 
+fmulsu:   0 icall :   0 ijmp  :   0 in    :   0 inc   :   5 jmp   :   9 
+ld    :   1 ldd   :   0 ldi   :  42 lds   :   0 lpm   :   1 lsl   :   1 
+lsr   :   0 mov   :   0 movw  :   0 mul   :   0 muls  :   0 mulsu :   0 
+neg   :   0 nop   :   0 or    :   0 ori   :   3 out   :   2 pop   :  11 
+push  :  11 rcall :   0 ret   :  11 reti  :   1 rjmp  :   2 rol   :   1 
 ror   :   0 sbc   :   0 sbci  :   0 sbi   :  12 sbic  :   0 sbis  :   0 
 sbiw  :   2 sbr   :   0 sbrc  :   0 sbrs  :   4 sec   :   0 seh   :   0 
 sei   :   1 sen   :   0 ser   :   0 ses   :   0 set   :   0 sev   :   0 
-sez   :   0 sleep :   0 spm   :   0 st    :   2 std   :   0 sts   :   4 
-sub   :   0 subi  :   2 swap  :   2 tst   :   0 wdr   :   0 
-Instructions used: 31 out of 113 (27.4%)
+sez   :   0 sleep :   0 spm   :   0 st    :   3 std   :   0 sts   :   4 
+sub   :   1 subi  :   2 swap  :   2 tst   :   0 wdr   :   0 
+Instructions used: 33 out of 113 (29.2%)
 
 "ATmega328P" memory use summary [bytes]:
-Segment   Begin    End      Code   Data   Used    Size   Use%  Warn
---------------------------------------------------------------------
-[.cseg] 0x000000 0x00020a    474      0    474   32768   1.4%
-[.dseg] 0x000034 0x000102      0      2      2    2048   0.1%  UNDER
+Segment   Begin    End      Code   Data   Used    Size   Use%
+---------------------------------------------------------------
+[.cseg] 0x000000 0x00027a    538      0    538   32768   1.6%
+[.dseg] 0x000100 0x000102      0      2      2    2048   0.1%
 [.eseg] 0x000000 0x000000      0      0      0    1024   0.0%
 
-Assembly complete, 0 errors, 3 warnings
+Assembly complete, 0 errors, 2 warnings

@@ -1,5 +1,5 @@
 
-AVRASM ver. 2.2.7  C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm Thu Dec 07 19:13:44 2017
+AVRASM ver. 2.2.7  C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\test\timer\timer.asm Sun Dec 10 00:30:47 2017
 
 
 EQU  SIGNATURE_000 0000001e
@@ -696,10 +696,14 @@ EQU  TWIaddr      00000030
 EQU  SPMRaddr     00000032
 EQU  INT_VECTORS_SIZE 00000034
 DEF  temp_r16     r16
-DEF  interupt_ctr r17
-CSEG RESET        000000ec
-CSEG TIMER1_OVR   000000cb
-DSEG counter_str  00000100
+DEF  temp_r17     r17
+DEF  hund_sec_reg r18
+DEF  sec_reg      r19
+DEF  min_reg      r20
+DEF  hour_reg     r21
+DSEG sec_str      00000100
+CSEG RESET        00000121
+CSEG TIMER1_OVR   000000e3
 EQU  fclk         00f42400
 EQU  lcd_D7_port  0000000b
 EQU  lcd_D7_bit   00000007
@@ -729,27 +733,31 @@ EQU  lcd_DisplayOn 0000000c
 EQU  lcd_FunctionReset 00000030
 EQU  lcd_FunctionSet4bit 00000028
 EQU  lcd_SetCursor 00000080
-CSEG lcd_init_4d  0000001c
-CSEG delayTx1mS   0000009f
-CSEG lcd_write_4  00000087
-CSEG delayTx1uS   000000ad
-CSEG lcd_write_instruction_4d 0000007c
-CSEG lcd_write_string_4d 0000005e
-CSEG lcd_write_string_4d_01 00000068
-CSEG lcd_write_string_4d_02 00000071
-CSEG lcd_write_character_4d 00000074
-CSEG delay1uS     000000b2
-CSEG delayYx1mS   0000009a
-CSEG delay1mS     000000a4
-CSEG delay1mS_01  000000a8
-CSEG lcd_write_string_4d_mem 000000b7
-CSEG lcd_write_string_4d_mem_01 000000bf
-CSEG lcd_write_string_4d_mem_02 000000c8
-CSEG TIMER1_OVR_CTR_OVR 000000d0
-CSEG TIMER1_OVR_DISP 000000d1
-CSEG hex_to_letter_geA@hex_to_letter@2593 000000db
-CSEG hex_to_letter_out_of_range@hex_to_letter@2593 000000e0
-CSEG hex_to_letter_done@hex_to_letter@2593 000000e1
+CSEG lcd_init_4d  00000034
+CSEG delayTx1mS   000000b7
+CSEG lcd_write_4  0000009f
+CSEG delayTx1uS   000000c5
+CSEG lcd_write_instruction_4d 00000094
+CSEG lcd_write_string_4d 00000076
+CSEG lcd_write_string_4d_01 00000080
+CSEG lcd_write_string_4d_02 00000089
+CSEG lcd_write_character_4d 0000008c
+CSEG delay1uS     000000ca
+CSEG delayYx1mS   000000b2
+CSEG delay1mS     000000bc
+CSEG delay1mS_01  000000c0
+CSEG lcd_write_string_4d_mem 000000cf
+CSEG lcd_write_string_4d_mem_01 000000d7
+CSEG lcd_write_string_4d_mem_02 000000e0
+CSEG incr_time_carry_sec@incr_time@2671 000000e8
+CSEG incr_time_carry_min@incr_time@2671 000000ee
+CSEG incr_time_carry_hour@incr_time@2671 000000f4
+CSEG incr_time_overflow@incr_time@2671 000000fa
+CSEG incr_time_end@incr_time@2671 000000fb
+CSEG int_div_loop@int_div@2705 00000100
+CSEG int_div_done@int_div@2705 00000106
+CSEG hex_to_letter_out_of_range@hex_to_dec_str_two_dig@2699 0000010a
+CSEG hex_to_letter_store@hex_to_dec_str_two_dig@2699 0000010c
 EQU  wgm_hi       00000000
 EQU  wgo_lo       00000000
-CSEG sleep_loop   00000103
+CSEG sleep_loop   0000013b

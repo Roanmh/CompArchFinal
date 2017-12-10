@@ -1,5 +1,5 @@
 
-AVRA   Ver. 1.3.0 timer.asm Thu Dec 07 20:53:55 2017
+AVRA   Ver. 1.3.0 timer.asm Sun Dec 10 16:08:35 2017
 
 
          ;;; Includes
@@ -19,6 +19,25 @@ AVRA   Ver. 1.3.0 timer.asm Thu Dec 07 20:53:55 2017
           	  out SPH,r16
           	.endmacro
          
+           ;; Int Division: Returns floor(@0/@1) of two bytes in @0 register.
+           ;; Input:  0 - [Output Only]
+           ;;         1 - Dividend Register
+           ;;         2 - Divisor Register
+           ;; Output: 0 - Quotient Register
+           ;;         1 - Remainder Register
+           ;;         2 - [Input Only]
+            .macro int_div
+              clr @0
+          int_div_loop:
+              cp @1, @2
+              brlt int_div_done
+              inc @0
+              sub @1, @2
+              jmp int_div_loop
+          int_div_done:
+            .endmacro
+         
+         
            ;; Converts number in register to a hex digit 0-F or '#' if out of range
            ;; Params:  @0 register to convert. 16 <= r <= 31
            ;; Result:  Converted number -> @0
@@ -36,6 +55,79 @@ AVRA   Ver. 1.3.0 timer.asm Thu Dec 07 20:53:55 2017
             ldi @0, '#'
           hex_to_letter_done:
           .endmacro
+         
+           ;; Converts number in register to two decimal digits, zero padded
+           ;;   or '##' if out of range
+           ;; Params:  0 - Register to convert. 16 <= r <= 31
+           ;;          1 - Address to store at in SRAM (needs 3 bytes for storing.)
+           ;;          2 - Stratch Regiter
+           ;; Result:  Decimal String -> Address pointed to by @1
+          .macro hex_to_dec_str_two_dig
+            push @0
+            push @2
+            push temp_r16
+              cpi @0, $64
+              brge hex_to_letter_out_of_range
+              ldi temp_r16, 10
+              int_div @2, @0, temp_r16
+              subi @2, -0x30                ; Tens Place
+              subi @0, -0x30                ; Ones Place
+              jmp hex_to_letter_store
+          hex_to_letter_out_of_range:
+              ldi @0, '#'
+              ldi @2, '#'
+          hex_to_letter_store:
+              push XL
+                push XH
+                  ldi XH, high(@1)        ; Z = Code/Flash memory address of
+                  ldi XL, low(@1)         ; Message to be displayed
+                  st X+, @2
+                  st X+, @0
+                  clr temp_r16
+                  st X, temp_r16          ; Terminating Zero
+                pop XH
+              pop XL
+            pop temp_r16
+            pop @2
+            pop @0
+          .endmacro
+         
+           ;; Increment a number of counters that represent readable time values
+           ;; Input: Requires named registers: hun_sec_reg, sec_reg, min_reg, hour_reg
+            .macro incr_time
+              cpi hund_sec_reg, 99
+              brge incr_time_carry_sec
+              inc hund_sec_reg
+              jmp incr_time_end
+          incr_time_carry_sec:
+              cpi sec_reg, 59
+              brge incr_time_carry_min
+              clr hund_sec_reg
+              inc sec_reg
+              jmp incr_time_end
+          incr_time_carry_min:
+              cpi min_reg, 59
+              brge incr_time_carry_hour
+              clr sec_reg
+              inc min_reg
+              jmp incr_time_end
+          incr_time_carry_hour:
+              cpi min_reg, 23
+              brge incr_time_overflow
+              clr min_reg
+              inc hour_reg
+              jmp incr_time_end
+          incr_time_overflow:
+              clr hour_reg
+          incr_time_end:
+            .endmacro
+         
+            .macro store_time_val
+            	load_addr @0, @1
+          	  st @0+, temp_r16
+          	  ldi temp_r16, $00
+          	  st @0, temp_r16
+            .endmacro
          
          
          ; ---------------------------------------------------------------------------
@@ -111,7 +203,11 @@ AVRA   Ver. 1.3.0 timer.asm Thu Dec 07 20:53:55 2017
          
          ;;; Definitions
             .def temp_r16=r16
-            .def interupt_ctr=r17
+            .def temp_r17=r17
+            .def hund_sec_reg=r18
+            .def sec_reg=r19
+            .def min_reg=r20
+            .def hour_reg=r21
          
          
          ;;; Macros
@@ -119,22 +215,21 @@ AVRA   Ver. 1.3.0 timer.asm Thu Dec 07 20:53:55 2017
            ;; .macro display_num
          
          
+         	;;; Static Variable Planning
+          	.dseg
+D:000100    sec_str:  .byte 2          ; Counter string w/ null space
+         
+         
          ;;; Interupt Vectors
+            .cseg
             .org 0x0000
-C:000000 940c 00ec                jmp RESET
+C:000000 940c 0125                jmp RESET
             .org 0x001A                  ; This is the tiemer interupt vector.
-C:00001a 940c 00cb                jmp TIMER1_OVR
-         
-         
-         ;;; Static Variable Planning
-            .dseg
-D:000100    counter_str:  .byte 2          ; Counter string w/ null space
+C:00001a 940c 00e3                jmp TIMER1_OVR
          
          
          ;;; Beginning code above interupt vectors
             .org INT_VECTORS_SIZE
-         
-         
          ;;; Functions
             .cseg                         ; TODO: Why does this get rid of branch length errors?
            ;; Display Init
@@ -143,47 +238,90 @@ D:000100    counter_str:  .byte 2          ; Counter string w/ null space
          ;;; Timer ISR
             .cseg
           TIMER1_OVR:
-           ;; Note: Not storing Stat Reg because I am lazy and know it does not matter in this case
-C:0000cb 301f        cpi interupt_ctr, $0F
-C:0000cc f019        breq TIMER1_OVR_CTR_OVR
-C:0000cd 9513        inc interupt_ctr
-C:0000ce 940c 00d1   jmp	TIMER1_OVR_DISP
-          TIMER1_OVR_CTR_OVR:
-C:0000d0 2711        clr interupt_ctr
-          TIMER1_OVR_DISP:
-C:0000d1 e000        ldi temp_r16, $00
-C:0000d2 6800        ori temp_r16, lcd_SetCursor     ; convert the plain address to a set cursor instruction
-C:0000d3 940e 007c   call lcd_write_instruction_4d
-         
-C:0000d5 2f01        mov temp_r16, interupt_ctr
-C:0000d6   +    hex_to_letter temp_r16
-C:0000d6 300a      cpi temp_r16, $0A
-C:0000d7 f41c      brge hex_to_letter_geA
-C:0000d8 5d00      subi temp_r16, -0x30
-C:0000d9 940c 00e1 jmp hex_to_letter_done
-          hex_to_letter_geA:
-C:0000db 3100      cpi temp_r16, $10
-C:0000dc f41c      brge 	hex_to_letter_out_of_range
-C:0000dd 5c09      subi temp_r16, -0x37
-C:0000de 940c 00e1 jmp hex_to_letter_done
+C:0000e3   +    incr_time
+C:0000e3 3623      cpi hund_sec_reg, 99
+C:0000e4 f41c      brge incr_time_carry_sec
+C:0000e5 9523      inc hund_sec_reg
+C:0000e6 940c 00fb jmp incr_time_end
+          incr_time_carry_sec:
+C:0000e8 333b      cpi sec_reg, 59
+C:0000e9 f424      brge incr_time_carry_min
+C:0000ea 2722      clr hund_sec_reg
+C:0000eb 9533      inc sec_reg
+C:0000ec 940c 00fb jmp incr_time_end
+          incr_time_carry_min:
+C:0000ee 334b      cpi min_reg, 59
+C:0000ef f424      brge incr_time_carry_hour
+C:0000f0 2733      clr sec_reg
+C:0000f1 9543      inc min_reg
+C:0000f2 940c 00fb jmp incr_time_end
+          incr_time_carry_hour:
+C:0000f4 3147      cpi min_reg, 23
+C:0000f5 f424      brge incr_time_overflow
+C:0000f6 2744      clr min_reg
+C:0000f7 9553      inc hour_reg
+C:0000f8 940c 00fb jmp incr_time_end
+          incr_time_overflow:
+C:0000fa 2755      clr hour_reg
+          incr_time_end:
+C:0000fb   +    hex_to_dec_str_two_dig sec_reg, sec_str, temp_r17
+C:0000fb 933f      push sec_reg
+C:0000fc 931f      push temp_r17
+C:0000fd 930f      push temp_r16
+C:0000fe 3634      cpi sec_reg, $64
+C:0000ff f464      brge hex_to_letter_out_of_range
+C:000100 e00a      ldi temp_r16, 10
+C:000101   +  int_div temp_r17, sec_reg, temp_r16
+C:000101 2711      clr temp_r17
+          int_div_loop:
+C:000102 1730      cp sec_reg, temp_r16
+C:000103 f024      brlt int_div_done
+C:000104 9513      inc temp_r17
+C:000105 1b30      sub sec_reg, temp_r16
+C:000106 940c 0102 jmp int_div_loop
+          int_div_done:
+C:000108 5d10      subi temp_r17, -0x30                
+
+C:000109 5d30      subi sec_reg, -0x30                
+
+C:00010a 940c 010e jmp hex_to_letter_store
           hex_to_letter_out_of_range:
-C:0000e0 e203      ldi temp_r16, '#'
-          hex_to_letter_done:
-C:0000e1   +    load_addr X, counter_str
-C:0000e1 e0a0      ldi XL, low(counter_str)
-C:0000e2 e0b1      ldi XH, high(counter_str)
-C:0000e3 930d        st X+, temp_r16
-C:0000e4 e000        ldi temp_r16, $00
-C:0000e5 930c        st X, temp_r16
-C:0000e6   +    disp_from_sram counter_str, lcd_LineOne
-C:0000e6 e0b1      ldi XH, high(counter_str) 
+C:00010c e233      ldi sec_reg, '#'
+C:00010d e213      ldi temp_r17, '#'
+          hex_to_letter_store:
+C:00010e 93af      push XL
+C:00010f 93bf      push XH
+C:000110 e0b1      ldi XH, high(sec_str)        
 
-C:0000e7 e0a0      ldi XL, low(counter_str) 
+C:000111 e0a0      ldi XL, low(sec_str)         
 
-C:0000e8 e000      ldi r16, lcd_LineOne 
+C:000112 931d      st X+, temp_r17
+C:000113 933d      st X+, sec_reg
+C:000114 2700      clr temp_r16
+C:000115 930c      st X, temp_r16          
 
-C:0000e9 940e 00b7 call lcd_write_string_4d_mem
-C:0000eb 9518        reti
+C:000116 91bf      pop XH
+C:000117 91af      pop XL
+C:000118 910f      pop temp_r16
+C:000119 911f      pop temp_r17
+C:00011a 913f      pop sec_reg
+         
+C:00011b e000        ldi temp_r16, $00
+C:00011c 6800        ori temp_r16, lcd_SetCursor     ; convert the plain address to a set cursor instruction
+C:00011d 940e 0094   call lcd_write_instruction_4d
+         
+           ;; mov temp_r16, hund_sec_reg
+           ;; hex_to_letter temp_r16
+           ;; store_time_val X, sec_str
+C:00011f   +    disp_from_sram sec_str, lcd_LineOne
+C:00011f e0b1      ldi XH, high(sec_str) 
+
+C:000120 e0a0      ldi XL, low(sec_str) 
+
+C:000121 e000      ldi r16, lcd_LineOne 
+
+C:000122 940e 00cf call lcd_write_string_4d_mem
+C:000124 9518        reti
          
          
          
@@ -191,11 +329,11 @@ C:0000eb 9518        reti
             .cseg
           RESET:
          ;;; Init SP
-C:0000ec   +    init_sp
-C:0000ec ef0f      ldi r16,low(RAMEND)
-C:0000ed bf0d      out SPL,r16
-C:0000ee e008      ldi r16,high(RAMEND)
-C:0000ef bf0e      out SPH,r16
+C:000125   +    init_sp
+C:000125 ef0f      ldi r16,low(RAMEND)
+C:000126 bf0d      out SPL,r16
+C:000127 e008      ldi r16,high(RAMEND)
+C:000128 bf0e      out SPH,r16
            ;ldi r16,low(RAMEND)
            ;out SPL,r16
            ;ldi r16,high(RAMEND)
@@ -207,42 +345,45 @@ C:0000ef bf0e      out SPH,r16
             .equ wgm_hi = (00 << WGM12)   ; Currently set to "Normal" Mode
             .equ wgo_lo = (00 << WGM10)
            ;; Control Registers
-C:0000f0 e000        ldi temp_r16, $00
-C:0000f1 9300 0080   sts TCCR1A, temp_r16
+C:000129 e000        ldi temp_r16, $00
+C:00012a 9300 0080   sts TCCR1A, temp_r16
          
-C:0000f3 e004        ldi temp_r16, (0b100 << CS10)   ; Clock Source (Curr: x1 Prescale)
-C:0000f4 9300 0081   sts TCCR1B, temp_r16
+C:00012c e001        ldi temp_r16, (0b001 << CS10)   ; Clock Source (Curr: x1 Prescale)
+C:00012d 9300 0081   sts TCCR1B, temp_r16
          
-C:0000f6 e000        ldi temp_r16, $00
-C:0000f7 9300 0082 	sts TCCR1C, temp_r16
+C:00012f e000        ldi temp_r16, $00
+C:000130 9300 0082 	sts TCCR1C, temp_r16
          
            ;; Interupt Mask
-C:0000f9 e001        ldi temp_r16, (1 << TOIE1)
-C:0000fa 9300 006f   sts TIMSK1, temp_r16
+C:000132 e001        ldi temp_r16, (1 << TOIE1)
+C:000133 9300 006f   sts TIMSK1, temp_r16
          
          
-C:0000fc 940e 001c   call lcd_init_4d              ; Initialize LCD display for 4-bit interface
+C:000135 940e 0034   call lcd_init_4d              ; Initialize LCD display for 4-bit interface
          
          	;; Clear Display Instruction
-C:0000fe e001        ldi temp_r16, lcd_Clear       ; r16 = clear display instruction
-C:0000ff 940e 007c   call lcd_write_instruction_4d
+C:000137 e001        ldi temp_r16, lcd_Clear       ; r16 = clear display instruction
+C:000138 940e 0094   call lcd_write_instruction_4d
          
          
          ;;; Initialize Counter
-C:000101 2711        clr interupt_ctr
+C:00013a 2722        clr hund_sec_reg
+C:00013b 2733        clr sec_reg
+C:00013c 2744        clr min_reg
+C:00013d 2755        clr hour_reg
          
          
          ;;; Enable Interupts
-C:000102 9478        sei                           ; Enable those interupts
+C:00013e 9478        sei                           ; Enable those interupts
           sleep_loop:
            ;; Note: Trying out a more simple wait loop for now because sleep needs a more complex implementation
            ;; sleep                         ; Sleep becuase ISR handles everything now
            ;; Note: will enter sleep before any pending interrupt(s)
-C:000103 940c 0103   jmp sleep_loop                ; Because return from the interrupt will advance the PC
+C:00013f 940c 013f   jmp sleep_loop                ; Because return from the interrupt will advance the PC
 
 
 Segment usage:
-   Code      :       237 words (474 bytes)
+   Code      :       273 words (546 bytes)
    Data      :         2 bytes
    EEPROM    :         0 bytes
 

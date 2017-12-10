@@ -7,30 +7,28 @@
 
 ;;; Definitions
   .def temp_r16=r16
-  .def interupt_ctr=r17
+  .def temp_r17=r17
+  .def hund_sec_reg=r18
+  .def sec_reg=r19
+  .def min_reg=r20
+  .def hour_reg=r21
 
 
-;;; Macros
-  ;; Display the number in a given register on a given line
-  ;; .macro display_num
+	;;; Static Variable Planning
+	.dseg
+sec_str:  .byte 2          ; Counter string w/ null space
 
 
 ;;; Interupt Vectors
+  .cseg
   .org 0x0000
                jmp RESET
   .org 0x001A                  ; This is the tiemer interupt vector.
                jmp TIMER1_OVR
 
 
-;;; Static Variable Planning
-  .dseg
-counter_str:  .byte 2          ; Counter string w/ null space
-
-
 ;;; Beginning code above interupt vectors
   .org INT_VECTORS_SIZE
-
-
 ;;; Functions
   .cseg                         ; TODO: Why does this get rid of branch length errors?
   ;; Display Init
@@ -41,25 +39,17 @@ counter_str:  .byte 2          ; Counter string w/ null space
 ;;; Timer ISR
   .cseg
 TIMER1_OVR:
-  ;; Note: Not storing Stat Reg because I am lazy and know it does not matter in this case
-  cpi interupt_ctr, $0F
-  breq TIMER1_OVR_CTR_OVR
-  inc interupt_ctr
-  jmp	TIMER1_OVR_DISP
-TIMER1_OVR_CTR_OVR:
-  clr interupt_ctr
-TIMER1_OVR_DISP:
+  incr_time
+  hex_to_dec_str_two_dig sec_reg, sec_str, temp_r17
+
   ldi temp_r16, $00
   ori temp_r16, lcd_SetCursor     ; convert the plain address to a set cursor instruction
   call lcd_write_instruction_4d
 
-  mov temp_r16, interupt_ctr
-  hex_to_letter temp_r16
-  load_addr X, counter_str
-  st X+, temp_r16
-  ldi temp_r16, $00
-  st X, temp_r16
-  disp_from_sram counter_str, lcd_LineOne
+  ;; mov temp_r16, hund_sec_reg
+  ;; hex_to_letter temp_r16
+  ;; store_time_val X, sec_str
+  disp_from_sram sec_str, lcd_LineOne
   reti
 
 
@@ -83,7 +73,7 @@ RESET:
   ldi temp_r16, $00
   sts TCCR1A, temp_r16
 
-  ldi temp_r16, (0b100 << CS10)   ; Clock Source (Curr: x1 Prescale)
+  ldi temp_r16, (0b001 << CS10)   ; Clock Source (Curr: x1 Prescale)
   sts TCCR1B, temp_r16
 
   ldi temp_r16, $00
@@ -102,7 +92,10 @@ RESET:
 
 
 ;;; Initialize Counter
-  clr interupt_ctr
+  clr hund_sec_reg
+  clr sec_reg
+  clr min_reg
+  clr hour_reg
 
 
 ;;; Enable Interupts
