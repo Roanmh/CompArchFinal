@@ -1,13 +1,1039 @@
 
-AVRA   Ver. 1.3.0 src/main.asm Thu Nov 30 00:19:21 2017
+AVRA   Ver. 1.3.0 src/main.asm Mon Dec 11 17:52:20 2017
 
 
-C:000000 0000      nop
+         ;- main.asm --------------------------------------------------------------------
+         ;
+         ;  Desription:  Main source for a clock functioning on an ATMega328P and LCD
+         ;               Keypad Sheild
+         ;  Author:      Roan Martin-Hayden <roanmh@gmail.com>
+         ;  Date:        Dec 2017
+         ;-------------------------------------------------------------------------------
+         
+         
+         
+         ;;; Includes (Non-Function)
+            .list
+            .include "macros.inc"
+         ; macros.asm -------------------------------------------------------------------
+         ;
+         ; Desription:  Collection of macros for clock program.
+         ; Author:      Roan Martin-Hayden <roanmh@gmail.com>
+         ;               [Except where otherwise noted]
+         ; Date:        Dec 2017
+         ;-------------------------------------------------------------------------------
+         
+         ;----------------------------------------------------------------------------
+         ; Name:     init_sp
+         ; Purpose:  Initialize Stack Pointer to end of device's RAM
+         ; Args:     None
+         ; Notes:    Does not conserve value of r16
+         ; Author:   Mick Walters
+            .macro init_sp
+                          ldi r16,low(RAMEND)
+                          out SPL,r16
+                          ldi r16,high(RAMEND)
+                          out SPH,r16
+            .endmacro
+         
+         ;----------------------------------------------------------------------------
+         ; Name:     int_div
+         ; Purpose:  Perform integer division
+         ; Args:     0 - Dividend Register
+         ;           1 - Divisor Register -> Remainder Register
+         ;           2 - -> Quotient Register
+         ; Notes:    Does not conserve value of r16
+         ; Author:   Mick Walters
+            .macro int_div
+                          clr @2
+          int_div_loop:   cp @0, @1
+                          brlt int_div_done
+                          inc @2
+                          sub @0, @1
+                          jmp int_div_loop
+          int_div_done:
+            .endmacro
+         
+         ;----------------------------------------------------------------------------
+         ; Name:     hex_to_dec_str_two_dig
+         ; Purpose:  Convert a number to a NULL terminated ASCII representation with two
+         ;           digits.
+         ; Args:     0 - Register to convert. (16 <= r <= 31) Register is resotored
+         ;               after operation.
+         ;           1 - Address to store at in SRAM (needs 3 bytes for string.)
+         ; Notes:    Decimal String -> Address pointed to by Arg 1
+            .macro hex_to_dec_str_two_dig
+                          push @0
+                            push r16
+                              push r17
+                                cpi @0, $64
+                                brge hex_to_letter_out_of_range
+                                ldi r17, 10
+                                int_div @0, r17, r16
+                                subi r16, -0x30                   ; Tens Place
+                                subi @0, -0x30                   ; Ones Place
+                                jmp hex_to_letter_store
+          hex_to_letter_out_of_range:
+                                ldi r17, '#'
+                                ldi r16, '#'
+          hex_to_letter_store:
+                                push XL
+                                  push XH
+                                    ldi XH, high(@1)                 ; Z = Code/Flash memory address of
+                                    ldi XL, low(@1)                  ; Message to be displayed
+                                    st X+, r16
+                                    st X+, @0
+                                    clr r17
+                                    st X, r17                  ; Terminating Zero
+                                  pop XH
+                                pop XL
+                              pop r17
+                            pop r16
+                          pop @0
+          .endmacro
+         
+         ;----------------------------------------------------------------------------
+         ; Name:     incr_time
+         ; Purpose:  Increment a set of registers to represent a hundreth of a second
+         ;           passing.
+         ; Args:     0 - Hundreth Second Register
+         ;           1 - Second Register
+         ;           2 - Minute Register
+         ;           3 - Hour Register
+            .macro incr_time              ;TODO: Fix overflow (no 00 seem on secs)
+                                         ;TODO: Fix how it seems to top out
+                          cpi @0, 99
+                          brge incr_time_carry_sec
+                          inc @0
+                          jmp incr_time_end
+          incr_time_carry_sec:
+                          cpi @1, 59
+                          brge incr_time_carry_min
+                          clr @0
+                          inc @1
+                          jmp incr_time_end
+          incr_time_carry_min:
+                          cpi @2, 59
+                          brge incr_time_carry_hour
+                          clr @1
+                          inc @2
+                          jmp incr_time_end
+          incr_time_carry_hour:
+                          cpi @2, 23
+                          brge incr_time_overflow
+                          clr @2
+                          inc @3
+                          jmp incr_time_end
+          incr_time_overflow:
+                          clr @3
+          incr_time_end:
+            .endmacro
+         
+         ;----------------------------------------------------------------------------
+         ; Name:     disp_from_cm
+         ; Purpose:  Display a NULL terminated string from program memory
+         ; Args:     0 - (Flash) Memory Address of NULL terminated string
+         ;           1 - LCD Address
+         ; Note:     Uses r16 and Z, but restores them as well
+            .macro disp_from_pm
+            	            push r16
+                            push ZL
+                              push ZH
+                                ldi ZH, high(@0) ; Z = Code/Flash memory address of
+                                ldi ZL, low(@0)  ;     message to be displayed
+                                ldi r16, @1      ; r16 = line 1 LCD address
+                                call lcd_write_string_4d
+                              pop r16
+                            pop ZH
+                          pop ZL
+            .endmacro
+         
+         ;----------------------------------------------------------------------------
+         ; Name:     disp_from_sram
+         ; Purpose:  Display a NULL terminated string from program memory.
+         ; Args:     0 - (SRAM) Memory Address of NULL terminated string
+         ;           1 - LCD Address
+         ; Note:     Uses r16 and Z, but restores them as well
+            .macro disp_from_sram
+                        	push r16
+                            push XL
+                              push XH
+                                ldi XH, high(@0) ; Z = Code/Flash memory address of
+                                ldi XL, low(@0)  ;     message to be displayed
+                                ldi r16, @1      ; r16 = line 1 LCD address
+                                call lcd_write_string_4d_mem
+                              pop XH
+                            pop XL
+                          pop r16
+            .endmacro
+         
+         ;----------------------------------------------------------------------------
+         ; Name:     disp_from_sram_app
+         ; Purpose:  Display a NULL terminated string from program memory at the
+         ;           current cursor location
+         ; Args:     0 - (SRAM) Memory Address of NULL terminated string
+         ; Note:     Uses r16 and Z, but restores them as well
+           	.macro disp_from_sram_append
+                          push XL
+                            push XH
+                              ldi XH, high(@0) ; Z = Code/Flash memory address of
+                              ldi XL, low(@0)  ;     message to be displayed
+                              call lcd_append_string_4d_mem
+                            pop XH
+                          pop XL
+            .endmacro
+         
+         ;----------------------------------------------------------------------------
+         ; Name:     load_addr
+         ; Purpose:  Load an adress into a lettered register.
+         ; Args:     0 - Register to load the address into
+         ;           1 - Address to load
+            .macro load_addr
+          	              ldi @0L, low(@1)
+          	              ldi @0H, high(@1)
+            .endmacro
+         
+         
+         ;;; Definitions
+           ;; Register Definitions
+           ;.def temp_r16=r16            ; Included in LCD-lib.asm
+            .def temp_r16     = r16
+            .def temp_r17     = r17
+            .def hund_sec_reg = r18
+            .def sec_reg      = r19
+            .def min_reg      = r20
+            .def hour_reg     = r21
+         
+         
+           ;; Contstant Definitions
+         
+           ; 16bit Timer Waveform Generation Mode
+            .equ t16wgm_hi = (0b00 << WGM12)   ; Normal Mode
+            .equ t16wgm_lo = (0b00 << WGM10)
+           ;.equ t16wgm_hi = (0b01 << WGM12)   ; CTC Mode (For Future Reference)
+           ;.equ t16wgo_lo = (0b00 << WGM10)
+         
+           ; 16bit Timer Clock Select
+            .equ t16cs = (0b001 << CS10)  ; ClkIO x1 (no prescale)
+         
+           ; 16Bit Timer Interrupt Mask
+            .equ t16im = (0b1 << TOIE1)   ; Overflow Interupt Enable
+           ;.equ t16im = (0b1 << OCIEA)   ; Output Compare Register A Int. En.
+         
+           ;Display Location Constants
+            .equ clk_hr_loc   = 0x00
+            .equ clk_cln1_loc = 0x02
+            .equ clk_mn_loc   = 0x03
+            .equ clk_cln2_loc = 0x05
+            .equ clk_sc_loc   = 0x06
+         
+         ;;; Static Variables
+            .dseg
+         
+           ;; Time Value Strings: Null terminated ASCII strings of each time value
+           ;; Note: See "" for programed string values
+D:000100    hund_sec_str:  .byte 3
+D:000103    ten_sec_str:   .byte 3
+D:000106    sec_str:       .byte 3
+D:000109    min_str:       .byte 3
+D:00010c    hour_str:      .byte 3
+         
+         ;;; Interupt Vectors
+            .cseg
+            .org 0x0000
+C:000000 940c 0183                 jmp RESET       ; Reset Interupt Vecotor
+            .org 0x001A
+C:00001a 940c 00cf                 jmp TIMER1_OVR  ; Timer Overflow Interupt Vector.
+         
+            .org INT_VECTORS_SIZE         ; Start Rest of code after Interupt Vectors
+         
+         
+         
+         ;;; Interupt Service Routines
+         
+           ;; Timer Overflow Interupt
+            .cseg                         ; This seems needed to avoid errors
+            	.include "LCD-lib.asm"
+         ; ***************************************************************************
+         ;   LCD-Lib.asm, based on:
+         ;   LCD-AVR-4d.asm - Use an HD44780U based LCD with an Atmel ATmega processor
+         ;
+         ;   Copyright (C) 2013 Donald Weiman    (weimandn@alfredstate.edu)
+         ;
+         ;   This program is free software: you can redistribute it and/or modify
+         ;   it under the terms of the GNU General Public License as published by
+         ;   the Free Software Foundation, either version 3 of the License, or
+         ;   (at your option) any later version.
+         ;
+         ;   This program is distributed in the hope that it will be useful,
+         ;   but WITHOUT ANY WARRANTY; without even the implied warranty of
+         ;   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+         ;   GNU General Public License for more details.
+         ;
+         ;   You should have received a copy of the GNU General Public License
+         ;   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+         ;
+         ; ***************************************************************************
+         ;        File:    LCD-AVR-4d.asm
+         ;        Date:    September 8, 2013
+         ;
+         ;      Target:    ATmega328p
+         ;   Assembler:    avra Avr Assembler
+         ;      Author:    Donald Weiman
+         ;     
+         ;    Modified:    M. L. Walters, Nov 2017
+         ;
+         ;    Hardware:    Arduino, Boarduino, Xplained Mini or equivalent, LCD Module
+         ;
+         ;     Summary:    4-bit data interface, busy flag not implemented.
+         ;                 Any LCD pin can be connected to any available I/O port.
+         ;                 Includes a simple write string routine.
+         ;
+         ; ****************************** Program Notes ******************************
+         ;
+         ;           This program uses a 4-bit data interface but does not use the
+         ;             busy flag to determine when the LCD controller is ready.  The
+         ;             LCD RW line (pin 5) is not connected to the uP and it must be
+         ;             connected to GND for the program to function.
+         ;
+         ;           All time delays are longer than those specified in most datasheets
+         ;             in order to accommodate slower than normal LCD modules.  This
+         ;             requirement is well documented but almost always ignored.  The
+         ;             information is in a note at the bottom of the right hand
+         ;             (Execution Time) column of the instruction set.
+         ;
+         ; ***************************************************************************
+         ;
+         ;           The four data lines as well as the two control lines may be
+         ;             implemented on any available I/O pin of any port.  These are
+         ;             the connections used for this program:
+         ;
+         ;                -----------                   ----------
+         ;               | ATmega328 |                 |   LCD    |
+         ;               |           |                 |          |
+         ;               |        PD7|---------------->|D7        |
+         ;               |        PD6|---------------->|D6        |
+         ;               |        PD5|---------------->|D5        |
+         ;               |        PD4|---------------->|D4        |
+         ;               |           |                 |D3        |
+         ;               |           |                 |D2        |
+         ;               |           |                 |D1        |
+         ;               |           |                 |D0        |
+         ;               |           |                 |          |
+         ;               |        PB1|---------------->|E         |
+         ;               |           |         GND --->|RW        |
+         ;               |        PB0|---------------->|RS        |
+         ;                -----------                   ----------
+         ;
+         ; ***************************************************************************
+         
+          .equ    fclk = 16000000      ; system clock frequency (for delays)
+         
+         ; register usage
+          .def    temp_r16 = r16     ; temporary storage
+         
+         ; LCD interface (should agree with the diagram above)
+         ;   make sure that the LCD RW pin is connected to GND
+          .equ    lcd_D7_port = PORTD         ; lcd D7 connection
+          .equ    lcd_D7_bit  = PORTD7
+          .equ    lcd_D7_ddr  = DDRD
+         
+          .equ    lcd_D6_port = PORTD         ; lcd D6 connection
+          .equ    lcd_D6_bit  = PORTD6
+          .equ    lcd_D6_ddr  = DDRD
+         
+          .equ    lcd_D5_port = PORTD         ; lcd D5 connection
+          .equ    lcd_D5_bit  = PORTD5
+          .equ    lcd_D5_ddr  = DDRD
+         
+          .equ    lcd_D4_port  = PORTD         ; lcd D4 connection
+          .equ    lcd_D4_bit   = PORTD4
+          .equ    lcd_D4_ddr   = DDRD
+         
+          .equ    lcd_E_port   = PORTB         ; lcd Enable pin
+          .equ    lcd_E_bit    = PORTB1
+          .equ    lcd_E_ddr    = DDRB
+         
+          .equ    lcd_RS_port  = PORTB         ; lcd Register Select pin
+          .equ    lcd_RS_bit   = PORTB0
+          .equ    lcd_RS_ddr   = DDRB
+         
+         ; LCD module information
+          .equ    lcd_LineOne         = 0x00          ; start of line 1
+          .equ    lcd_LineTwo         = 0x40          ; start of line 2
+         ;.equ   lcd_LineThree        = 0x14          ; start of line 3 (20x4)
+         ;.equ   lcd_lineFour         = 0x54          ; start of line 4 (20x4)
+         ;.equ   lcd_LineThree        = 0x10          ; start of line 3 (16x4)
+         ;.equ   lcd_lineFour         = 0x50          ; start of line 4 (16x4)
+         
+         ; LCD instructions
+          .equ    lcd_Clear           = 0b00000001    ; replace all characters with ASCII 'space'
+          .equ    lcd_Home            = 0b00000010    ; return cursor to first position on first line
+          .equ    lcd_EntryMode       = 0b00000110    ; shift cursor from left to right on read/write
+          .equ    lcd_DisplayOff      = 0b00001000    ; turn display off
+          .equ    lcd_DisplayOn       = 0b00001100    ; display on, cursor off, don't blink character
+          .equ    lcd_FunctionReset   = 0b00110000    ; reset the LCD
+          .equ    lcd_FunctionSet4bit = 0b00101000    ; 4-bit data, 2-line display, 5 x 7 font
+          .equ    lcd_SetCursor       = 0b10000000    ; set cursor position
+         
+         ; ============================== 4-bit LCD Subroutines ======================
+         ; Name:     lcd_init_4d
+         ; Purpose:  initialize the LCD module for a 4-bit data interface
+         ; Entry:    equates (LCD instructions) set up for the desired operation
+         ; Exit:     no parameters
+         ; Notes:    uses time delays instead of checking the busy flag
+         
+          lcd_init_4d:
+         ; Power-up delay
+C:000034 e604          ldi     temp_r16, 100                       ; initial 40 mSec delay
+C:000035 940e 00b7     call    delayTx1mS
+         
+         ; IMPORTANT - At this point the LCD module is in the 8-bit mode and it is expecting to receive  
+         ;    8 bits of data, one bit on each of its 8 data lines, each time the 'E' line is pulsed.
+         ;
+         ;  Since the LCD module is wired for the 4-bit mode, only the upper four data lines are connected to 
+         ;    the microprocessor and the lower four data lines are typically left open.  Therefore, when 
+         ;    the 'E' line is pulsed, the LCD controller will read whatever data has been set up on the upper 
+         ;    four data lines and the lower four data lines will be high (due to internal pull-up circuitry).
+         ;
+         ;  Fortunately the 'FunctionReset' instruction does not care about what is on the lower four bits so  
+         ;    this instruction can be sent on just the four available data lines and it will be interpreted 
+         ;    properly by the LCD controller.  The 'lcd_write_4' subroutine will accomplish this if the 
+         ;    control lines have previously been configured properly.
+         
+         ; configure the microprocessor pins for the data lines
+C:000037 9a57          sbi     lcd_D7_ddr, lcd_D7_bit          ; 4 data lines - output
+C:000038 9a56          sbi     lcd_D6_ddr, lcd_D6_bit
+C:000039 9a55          sbi     lcd_D5_ddr, lcd_D5_bit
+C:00003a 9a54          sbi     lcd_D4_ddr, lcd_D4_bit
+         
+         ; configure the microprocessor pins for the control lines
+C:00003b 9a21          sbi     lcd_E_ddr,  lcd_E_bit           ; E line - output
+C:00003c 9a20          sbi     lcd_RS_ddr, lcd_RS_bit          ; RS line - output
+         
+         ; Set up the RS and E lines for the 'lcd_write_4' subroutine.
+C:00003d 9828          cbi     lcd_RS_port, lcd_RS_bit         ; select the Instruction Register (RS low)
+C:00003e 9829          cbi     lcd_E_port, lcd_E_bit           ; make sure E is initially low
+         
+         ; Reset the LCD controller.
+C:00003f e300          ldi     temp_r16, lcd_FunctionReset         ; first part of reset sequence
+C:000040 940e 009f     call    lcd_write_4
+C:000042 e00a          ldi     temp_r16, 10                        ; 4.1 mS delay (min)
+C:000043 940e 00b7     call    delayTx1mS
+         
+C:000045 e300          ldi     temp_r16, lcd_FunctionReset         ; second part of reset sequence
+C:000046 940e 009f     call    lcd_write_4
+C:000048 ec08          ldi     temp_r16, 200                       ; 100 uS delay (min)
+C:000049 940e 00c5     call    delayTx1uS
+         
+C:00004b e300          ldi     temp_r16, lcd_FunctionReset         ; third part of reset sequence
+C:00004c 940e 009f     call    lcd_write_4
+C:00004e ec08          ldi     temp_r16, 200                       ; this delay is omitted in the data sheet
+C:00004f 940e 00c5     call    delayTx1uS
+         
+         ; Preliminary Function Set instruction - used only to set the 4-bit mode.
+         ; The number of lines or the font cannot be set at this time since the controller is still in the 
+         ;   8-bit mode, but the data transfer mode can be changed since this parameter is determined by one 
+         ;   of the upper four bits of the instruction.
+C:000051 e208          ldi     temp_r16, lcd_FunctionSet4bit       ; set 4-bit mode
+C:000052 940e 009f     call    lcd_write_4
+C:000054 e500          ldi     temp_r16, 80                        ; 40 uS delay (min)
+C:000055 940e 00c5     call    delayTx1uS
+         
+         ; Function Set instruction
+C:000057 e208          ldi     temp_r16, lcd_FunctionSet4bit       ; set mode, lines, and font
+C:000058 940e 0094     call    lcd_write_instruction_4d
+C:00005a e500          ldi     temp_r16, 80                        ; 40 uS delay (min)
+C:00005b 940e 00c5     call    delayTx1uS
+         
+         ; The next three instructions are specified in the data sheet as part of the initialization routine,
+         ;   so it is a good idea (but probably not necessary) to do them just as specified and then redo them
+         ;   later if the application requires a different configuration.
+         
+         ; Display On/Off Control instruction
+C:00005d e008          ldi     temp_r16, lcd_DisplayOff            ; turn display OFF
+C:00005e 940e 0094     call    lcd_write_instruction_4d
+C:000060 e500          ldi     temp_r16, 80                        ; 40 uS delay (min)
+C:000061 940e 00c5     call    delayTx1uS
+         
+         ; Clear Display instruction
+C:000063 e001          ldi     temp_r16, lcd_Clear                 ; clear display RAM
+C:000064 940e 0094     call    lcd_write_instruction_4d
+C:000066 e004          ldi     temp_r16, 4                         ; 1.64 mS delay (min)
+C:000067 940e 00b7     call    delayTx1mS
+         
+         ; Entry Mode Set instruction
+C:000069 e006          ldi     temp_r16, lcd_EntryMode             ; set desired shift characteristics
+C:00006a 940e 0094     call    lcd_write_instruction_4d
+C:00006c e500          ldi     temp_r16, 80                        ; 40 uS delay (min)
+C:00006d 940e 00c5     call    delayTx1uS
+         
+         ; This is the end of the LCD controller initialization as specified in the data sheet, but the display
+         ;   has been left in the OFF condition.  This is a good time to turn the display back ON.
+         
+         ; Display On/Off Control instruction
+C:00006f e00c          ldi     temp_r16, lcd_DisplayOn             ; turn the display ON
+C:000070 940e 0094     call    lcd_write_instruction_4d
+C:000072 e500          ldi     temp_r16, 80                        ; 40 uS delay (min)
+C:000073 940e 00c5     call    delayTx1uS
+C:000075 9508          ret
+         
+         
+         
+         
+         
+         
+         
+         
+         
+         ; ---------------------------------------------------------------------------
+         ; Name:     lcd_write_string_4d
+         ; Purpose:  display a string of characters on the LCD
+         ; Entry:    ZH and ZL pointing to the start of the string
+         ;           (temp_r16) contains the desired DDRAM address at which to start the display
+         ; Exit:     no parameters
+         ; Notes:    the string must end with a null (0)
+         ;           uses time delays instead of checking the busy flag
+         
+          lcd_write_string_4d:
+         ; preserve registers
+C:000076 93ff          push    ZH                              ; preserve pointer registers
+C:000077 93ef          push    ZL
+         
+         ; fix up the pointers for use with the 'lpm' instruction
+C:000078 0fee          lsl     ZL                              ; shift the pointer one bit left for the lpm instruction
+C:000079 1fff          rol     ZH
+         
+         ; set up the initial DDRAM address
+C:00007a 6800          ori     temp_r16, lcd_SetCursor     ; convert the plain address to a set cursor instruction
+C:00007b 940e 0094     call   lcd_write_instruction_4d     ; set up the first DDRAM address
+C:00007d e500          ldi     temp_r16, 80                ; 40 uS delay (min)
+C:00007e 940e 00c5     call    delayTx1uS
+         
+         ; write the string of characters
+          lcd_write_string_4d_01:
+C:000080 9105          lpm     temp_r16, Z+                        ; get a character
+C:000081 3000          cpi     temp_r16,  0                        ; check for end of string
+C:000082 f031          breq    lcd_write_string_4d_02          ; done
+         
+         ; arrive here if this is a valid character
+C:000083 940e 008c     call    lcd_write_character_4d          ; display the character
+C:000085 e500          ldi     temp_r16, 80                        ; 40 uS delay (min)
+C:000086 940e 00c5     call    delayTx1uS
+C:000088 cff7          rjmp    lcd_write_string_4d_01          ; not done, send another character
+         
+         ; arrive here when all characters in the message have been sent to the LCD module
+          lcd_write_string_4d_02:
+C:000089 91ef          pop     ZL                              ; restore pointer registers
+C:00008a 91ff          pop     ZH
+C:00008b 9508          ret
+         
+         ; ---------------------------------------------------------------------------
+         ; Name:     lcd_write_character_4d
+         ; Purpose:  send a byte of information to the LCD data register
+         ; Entry:    (temp_r16) contains the data byte
+         ; Exit:     no parameters
+         ; Notes:    does not deal with RW (busy flag is not implemented)
+         
+          lcd_write_character_4d:
+C:00008c 9a28          sbi     lcd_RS_port, lcd_RS_bit         ; select the Data Register (RS high)
+C:00008d 9829          cbi     lcd_E_port, lcd_E_bit           ; make sure E is initially low
+C:00008e 940e 009f     call    lcd_write_4                     ; write the upper 4-bits of the data
+C:000090 9502          swap    temp_r16                        ; swap high and low nibbles
+C:000091 940e 009f     call    lcd_write_4                     ; write the lower 4-bits of the data
+C:000093 9508          ret
+         
+         ; ---------------------------------------------------------------------------
+         ; Name:     lcd_write_instruction_4d
+         ; Purpose:  send a byte of information to the LCD instruction register
+         ; Entry:    (temp_r16) contains the data byte
+         ; Exit:     no parameters
+         ; Notes:    does not deal with RW (busy flag is not implemented)
+         
+          lcd_write_instruction_4d:
+C:000094 9828          cbi     lcd_RS_port, lcd_RS_bit ; select the Instruction Register (RS low)
+C:000095 9829          cbi     lcd_E_port, lcd_E_bit   ; make sure E is initially low
+C:000096 940e 009f     call    lcd_write_4             ; write the upper 4-bits of the instruction
+C:000098 9502          swap    temp_r16                ; swap high and low nibbles
+C:000099 940e 009f     call    lcd_write_4             ; write the lower 4-bits of the instruction
+C:00009b e004          ldi     temp_r16, 4                  ; 1.64 mS delay (min)
+C:00009c 940e 00b7     call    delayTx1mS              ;
+C:00009e 9508          ret
+         
+         ; ---------------------------------------------------------------------------
+         ; Name:     lcd_write_4
+         ; Purpose:  send a nibble (4-bits) of information to the LCD module
+         ; Entry:    (temp_r16) contains a byte of data with the desired 4-bits in the upper nibble
+         ;           (RS) is configured for the desired LCD register
+         ;           (E) is low
+         ;           (RW) is low
+         ; Exit:     no parameters
+         ; Notes:    use either time delays or the busy flag
+         
+          lcd_write_4:
+         ; set up D7
+C:00009f 9a5f          sbi     lcd_D7_port, lcd_D7_bit         ; assume that the D7 data is '1'
+C:0000a0 ff07          sbrs    temp_r16, 7                         ; check the actual data value
+C:0000a1 985f          cbi     lcd_D7_port, lcd_D7_bit         ; arrive here only if the data was actually '0'
+         
+         ; set up D6
+C:0000a2 9a5e          sbi     lcd_D6_port, lcd_D6_bit         ; repeat for each data bit
+C:0000a3 ff06          sbrs    temp_r16, 6
+C:0000a4 985e          cbi     lcd_D6_port, lcd_D6_bit
+         
+         ; set up D5
+C:0000a5 9a5d          sbi     lcd_D5_port, lcd_D5_bit
+C:0000a6 ff05          sbrs    temp_r16, 5
+C:0000a7 985d          cbi     lcd_D5_port, lcd_D5_bit
+         
+         ; set up D4
+C:0000a8 9a5c          sbi     lcd_D4_port, lcd_D4_bit
+C:0000a9 ff04          sbrs    temp_r16, 4 
+C:0000aa 985c          cbi     lcd_D4_port, lcd_D4_bit
+         
+         ; write the data
+                                                     ; 'Address set-up time' (40 nS)
+C:0000ab 9a29          sbi     lcd_E_port, lcd_E_bit           ; Enable pin high
+C:0000ac 940e 00ca     call    delay1uS                        ; implement 'Data set-up time' (80 nS) and 'Enable pulse width' (230 nS)
+C:0000ae 9829          cbi     lcd_E_port, lcd_E_bit           ; Enable pin low
+C:0000af 940e 00ca     call    delay1uS                        ; implement 'Data hold time' (10 nS) and 'Enable cycle time' (500 nS)
+C:0000b1 9508          ret
+         
+         ; ============================== End of 4-bit LCD Subroutines ===============
+         
+         ; ============================== Time Delay Subroutines =====================
+         ; Name:     delayYx1mS
+         ; Purpose:  provide a delay of (YH:YL) x 1 mS
+         ; Entry:    (YH:YL) = delay data
+         ; Exit:     no parameters
+         ; Notes:    the 16-bit register provides for a delay of up to 65.535 Seconds
+         ;           requires delay1mS
+         
+          delayYx1mS:
+C:0000b2 940e 00bc     call    delay1mS                        ; delay for 1 mS
+C:0000b4 9721          sbiw    YH:YL, 1                        ; update the the delay counter
+C:0000b5 f7e1          brne    delayYx1mS                      ; counter is not zero
+         
+         ; arrive here when delay counter is zero (total delay period is finished)
+C:0000b6 9508          ret
+         
+         ; ---------------------------------------------------------------------------
+         ; Name:     delayTx1mS
+         ; Purpose:  provide a delay of (temp_r16) x 1 mS
+         ; Entry:    (temp_r16) = delay data
+         ; Exit:     no parameters
+         ; Notes:    the 8-bit register provides for a delay of up to 255 mS
+         ;           requires delay1mS
+         
+          delayTx1mS:
+C:0000b7 940e 00bc     call    delay1mS        ; delay for 1 mS
+C:0000b9 950a          dec     temp_r16        ; update the delay counter
+C:0000ba f7e1          brne    delayTx1mS      ; counter is not zero
+         
+         ; arrive here when delay counter is zero (total delay period is finished)
+C:0000bb 9508          ret
+         
+         ; ---------------------------------------------------------------------------
+         ; Name:     delay1mS
+         ; Purpose:  provide a delay of 1 mS
+         ; Entry:    no parameters
+         ; Exit:     no parameters
+         ; Notes:    chews up fclk/1000 clock cycles (including the 'call')
+         
+          delay1mS:
+C:0000bc 93cf          push    YL                              ; [2] preserve registers
+C:0000bd 93df          push    YH                              ; [2]
+C:0000be e9cb          ldi     YL, low (((fclk/1000)-18)/4)    ; [1] delay counter
+C:0000bf e0df          ldi     YH, high(((fclk/1000)-18)/4)    ; [1]
+         
+          delay1mS_01:
+C:0000c0 9721          sbiw    YH:YL, 1                        ; [2] update the the delay counter
+C:0000c1 f7f1          brne    delay1mS_01                     ; [2] delay counter is not zero
+         
+         ; arrive here when delay counter is zero
+C:0000c2 91df          pop     YH                              ; [2] restore registers
+C:0000c3 91cf          pop     YL                              ; [2]
+C:0000c4 9508          ret                                     ; [4]
+         
+         ; ---------------------------------------------------------------------------
+         ; Name:     delayTx1uS
+         ; Purpose:  provide a delay of (temp_r16) x 1 uS with a 16 MHz clock frequency
+         ; Entry:    (temp_r16) = delay data
+         ; Exit:     no parameters
+         ; Notes:    the 8-bit register provides for a delay of up to 255 uS
+         ;           requires delay1uS
+         
+          delayTx1uS:
+C:0000c5 940e 00ca     call    delay1uS                        ; delay for 1 uS
+C:0000c7 950a          dec     temp_r16                        ; decrement the delay counter
+C:0000c8 f7e1          brne    delayTx1uS                      ; counter is not zero
+         
+         ; arrive here when delay counter is zero (total delay period is finished)
+C:0000c9 9508          ret
+         
+         ; ---------------------------------------------------------------------------
+         ; Name:     delay1uS
+         ; Purpose:  provide a delay of 1 uS with a 16 MHz clock frequency
+         ; Entry:    no parameters
+         ; Exit:     no parameters
+         ; Notes:    add another push/pop for 20 MHz clock frequency
+         
+          delay1uS:
+C:0000ca 930f          push    temp_r16                            ; [2] these instructions do nothing except consume clock cycles
+C:0000cb 910f          pop     temp_r16                            ; [2]
+C:0000cc 930f          push    temp_r16                            ; [2]
+C:0000cd 910f          pop     temp_r16                            ; [2]
+C:0000ce 9508          ret                                     ; [4]
+         
+         ; ============================== End of Time Delay Subroutines ==============
+          ; ============================== End of Time Delay Subroutines ==============
+C:0000cf   +  TIMER1_OVR:     incr_time hund_sec_reg, sec_reg, min_reg, hour_reg
+         
+
+C:0000cf 3623      cpi hund_sec_reg, 99
+C:0000d0 f41c      brge incr_time_carry_sec
+C:0000d1 9523      inc hund_sec_reg
+C:0000d2 940c 00e7 jmp incr_time_end
+          incr_time_carry_sec:
+C:0000d4 333b      cpi sec_reg, 59
+C:0000d5 f424      brge incr_time_carry_min
+C:0000d6 2722      clr hund_sec_reg
+C:0000d7 9533      inc sec_reg
+C:0000d8 940c 00e7 jmp incr_time_end
+          incr_time_carry_min:
+C:0000da 334b      cpi min_reg, 59
+C:0000db f424      brge incr_time_carry_hour
+C:0000dc 2733      clr sec_reg
+C:0000dd 9543      inc min_reg
+C:0000de 940c 00e7 jmp incr_time_end
+          incr_time_carry_hour:
+C:0000e0 3147      cpi min_reg, 23
+C:0000e1 f424      brge incr_time_overflow
+C:0000e2 2744      clr min_reg
+C:0000e3 9553      inc hour_reg
+C:0000e4 940c 00e7 jmp incr_time_end
+          incr_time_overflow:
+C:0000e6 2755      clr hour_reg
+          incr_time_end:
+C:0000e7   +                  hex_to_dec_str_two_dig sec_reg, sec_str ; Convert and store time values
+C:0000e7 933f      push sec_reg
+C:0000e8 930f      push r16
+C:0000e9 931f      push r17
+C:0000ea 3634      cpi sec_reg, $64
+C:0000eb f464      brge hex_to_letter_out_of_range
+C:0000ec e01a      ldi r17, 10
+C:0000ed   +  int_div sec_reg, r17, r16
+C:0000ed 2700      clr r16
+C:0000ee 1731      int_div_loop:   cp sec_reg, r17
+C:0000ef f024      brlt int_div_done
+C:0000f0 9503      inc r16
+C:0000f1 1b31      sub sec_reg, r17
+C:0000f2 940c 00ee jmp int_div_loop
+          int_div_done:
+C:0000f4 5d00      subi r16, -0x30                   
+
+C:0000f5 5d30      subi sec_reg, -0x30                   
+
+C:0000f6 940c 00fa jmp hex_to_letter_store
+          hex_to_letter_out_of_range:
+C:0000f8 e213      ldi r17, '#'
+C:0000f9 e203      ldi r16, '#'
+          hex_to_letter_store:
+C:0000fa 93af      push XL
+C:0000fb 93bf      push XH
+C:0000fc e0b1      ldi XH, high(sec_str)                 
+
+C:0000fd e0a6      ldi XL, low(sec_str)                  
+
+C:0000fe 930d      st X+, r16
+C:0000ff 933d      st X+, sec_reg
+C:000100 2711      clr r17
+C:000101 931c      st X, r17                  
+
+C:000102 91bf      pop XH
+C:000103 91af      pop XL
+C:000104 911f      pop r17
+C:000105 910f      pop r16
+C:000106 913f      pop sec_reg
+C:000107   +                  hex_to_dec_str_two_dig min_reg, min_str
+C:000107 934f      push min_reg
+C:000108 930f      push r16
+C:000109 931f      push r17
+C:00010a 3644      cpi min_reg, $64
+C:00010b f464      brge hex_to_letter_out_of_range
+C:00010c e01a      ldi r17, 10
+C:00010d   +  int_div min_reg, r17, r16
+C:00010d 2700      clr r16
+C:00010e 1741      int_div_loop:   cp min_reg, r17
+C:00010f f024      brlt int_div_done
+C:000110 9503      inc r16
+C:000111 1b41      sub min_reg, r17
+C:000112 940c 010e jmp int_div_loop
+          int_div_done:
+C:000114 5d00      subi r16, -0x30                   
+
+C:000115 5d40      subi min_reg, -0x30                   
+
+C:000116 940c 011a jmp hex_to_letter_store
+          hex_to_letter_out_of_range:
+C:000118 e213      ldi r17, '#'
+C:000119 e203      ldi r16, '#'
+          hex_to_letter_store:
+C:00011a 93af      push XL
+C:00011b 93bf      push XH
+C:00011c e0b1      ldi XH, high(min_str)                 
+
+C:00011d e0a9      ldi XL, low(min_str)                  
+
+C:00011e 930d      st X+, r16
+C:00011f 934d      st X+, min_reg
+C:000120 2711      clr r17
+C:000121 931c      st X, r17                  
+
+C:000122 91bf      pop XH
+C:000123 91af      pop XL
+C:000124 911f      pop r17
+C:000125 910f      pop r16
+C:000126 914f      pop min_reg
+C:000127   +                  hex_to_dec_str_two_dig hour_reg, hour_str
+C:000127 935f      push hour_reg
+C:000128 930f      push r16
+C:000129 931f      push r17
+C:00012a 3654      cpi hour_reg, $64
+C:00012b f464      brge hex_to_letter_out_of_range
+C:00012c e01a      ldi r17, 10
+C:00012d   +  int_div hour_reg, r17, r16
+C:00012d 2700      clr r16
+C:00012e 1751      int_div_loop:   cp hour_reg, r17
+C:00012f f024      brlt int_div_done
+C:000130 9503      inc r16
+C:000131 1b51      sub hour_reg, r17
+C:000132 940c 012e jmp int_div_loop
+          int_div_done:
+C:000134 5d00      subi r16, -0x30                   
+
+C:000135 5d50      subi hour_reg, -0x30                   
+
+C:000136 940c 013a jmp hex_to_letter_store
+          hex_to_letter_out_of_range:
+C:000138 e213      ldi r17, '#'
+C:000139 e203      ldi r16, '#'
+          hex_to_letter_store:
+C:00013a 93af      push XL
+C:00013b 93bf      push XH
+C:00013c e0b1      ldi XH, high(hour_str)                 
+
+C:00013d e0ac      ldi XL, low(hour_str)                  
+
+C:00013e 930d      st X+, r16
+C:00013f 935d      st X+, hour_reg
+C:000140 2711      clr r17
+C:000141 931c      st X, r17                  
+
+C:000142 91bf      pop XH
+C:000143 91af      pop XL
+C:000144 911f      pop r17
+C:000145 910f      pop r16
+C:000146 915f      pop hour_reg
+         
+C:000147 e000                      ldi temp_r16, $00           ; Set cursor to Begining of first line
+C:000148 6800                      ori temp_r16, lcd_SetCursor	     ; convert the plain address to a set cursor instruction
+C:000149 940e 0094                 call lcd_write_instruction_4d
+         
+C:00014b   +                  	disp_from_sram hour_str, clk_hr_loc
+C:00014b 930f      push r16
+C:00014c 93af      push XL
+C:00014d 93bf      push XH
+C:00014e e0b1      ldi XH, high(hour_str) 
+
+C:00014f e0ac      ldi XL, low(hour_str)  
+
+C:000150 e000      ldi r16, clk_hr_loc      
+
+C:000151 940e 01a1 call lcd_write_string_4d_mem
+C:000153 91bf      pop XH
+C:000154 91af      pop XL
+C:000155 910f      pop r16
+C:000156   +  	                disp_from_pm colon_str, clk_cln1_loc
+C:000156 930f      push r16
+C:000157 93ef      push ZL
+C:000158 93ff      push ZH
+C:000159 e0f1      ldi ZH, high(colon_str) 
+
+C:00015a eae0      ldi ZL, low(colon_str)  
+
+C:00015b e002      ldi r16, clk_cln1_loc      
+
+C:00015c 940e 0076 call lcd_write_string_4d
+C:00015e 910f      pop r16
+C:00015f 91ff      pop ZH
+C:000160 91ef      pop ZL
+C:000161   +  	                disp_from_sram min_str, clk_mn_loc
+C:000161 930f      push r16
+C:000162 93af      push XL
+C:000163 93bf      push XH
+C:000164 e0b1      ldi XH, high(min_str) 
+
+C:000165 e0a9      ldi XL, low(min_str)  
+
+C:000166 e003      ldi r16, clk_mn_loc      
+
+C:000167 940e 01a1 call lcd_write_string_4d_mem
+C:000169 91bf      pop XH
+C:00016a 91af      pop XL
+C:00016b 910f      pop r16
+C:00016c   +  	                disp_from_pm colon_str, clk_cln2_loc
+C:00016c 930f      push r16
+C:00016d 93ef      push ZL
+C:00016e 93ff      push ZH
+C:00016f e0f1      ldi ZH, high(colon_str) 
+
+C:000170 eae0      ldi ZL, low(colon_str)  
+
+C:000171 e005      ldi r16, clk_cln2_loc      
+
+C:000172 940e 0076 call lcd_write_string_4d
+C:000174 910f      pop r16
+C:000175 91ff      pop ZH
+C:000176 91ef      pop ZL
+C:000177   +  	                disp_from_sram sec_str, clk_sc_loc
+C:000177 930f      push r16
+C:000178 93af      push XL
+C:000179 93bf      push XH
+C:00017a e0b1      ldi XH, high(sec_str) 
+
+C:00017b e0a6      ldi XL, low(sec_str)  
+
+C:00017c e006      ldi r16, clk_sc_loc      
+
+C:00017d 940e 01a1 call lcd_write_string_4d_mem
+C:00017f 91bf      pop XH
+C:000180 91af      pop XL
+C:000181 910f      pop r16
+                         ;; disp_from_sram_append hour_str
+                         ;; disp_from_pm colon_str, clk_cln1_loc
+                         ;; disp_from_sram_append min_str
+                         ;; disp_from_pm colon_str, clk_cln2_loc
+                         ;; disp_from_sram_append sec_str
+C:000182 9518                      reti
+         
+         
+         ;;; Startup Routine
+            .cseg
+C:000183   +  RESET:          init_sp         ; Initialize the Stack Pointer
+C:000183 ef0f      ldi r16,low(RAMEND)
+C:000184 bf0d      out SPL,r16
+C:000185 e008      ldi r16,high(RAMEND)
+C:000186 bf0e      out SPH,r16
+         
+           ;; Timer Setup
+           ;;  -Control Registers
+C:000187 e000                      ldi temp_r16, t16wgm_lo
+C:000188 9300 0080                 sts TCCR1A, temp_r16
+         
+C:00018a e001                      ldi temp_r16, t16cs         ; Clock Source (Curr: x1 Prescale)
+C:00018b 6000                      ori temp_r16, t16wgm_hi
+C:00018c 9300 0081                 sts TCCR1B, temp_r16
+         
+C:00018e e000                      ldi temp_r16, $00 ;TODO: Add constant for this
+C:00018f 9300 0082                 sts TCCR1C, temp_r16
+         
+           ;;  -Interupt Mask
+C:000191 e001                      ldi temp_r16, t16im
+C:000192 9300 006f                 sts TIMSK1, temp_r16
+         
+         
+C:000194 940e 0034                 call lcd_init_4d              ; Initialize LCD display for 4-bit interface
+         
+           ;; Clear Display Instruction
+C:000196 e001                      ldi temp_r16, lcd_Clear       ; r16 = clear display instruction
+C:000197 940e 0094                 call lcd_write_instruction_4d
+         
+         
+           ;; Initialize Counters
+C:000199 2722                      clr hund_sec_reg
+C:00019a 2733                      clr sec_reg
+C:00019b 2744                      clr min_reg
+C:00019c 2755                      clr hour_reg
+         
+           ;; Global Interupt Enable
+C:00019d 9478                      sei
+         
+           ;; Waiting Loop
+C:00019e 940c 019e wait_loop:      jmp wait_loop
+         
+         ;;; Program Constants
+            .cseg
+          colon_str:      .db ":", 0
+C:0001A0 3A00
+         ;;; Function Libraries
+            .cseg
+           ;; .include "LCD-lib.asm"
+            .include "timer_fxns.inc"
+         ;- macros.asm ------------------------------------------------------------------
+         ;
+         ; Desription:  Collection of macros for clock program.
+         ; Author:      Roan Martin-Hayden <roanmh@gmail.com>
+         ;               [Except where otherwise noted]
+         ; Date:        Dec 2017
+         ;-------------------------------------------------------------------------------
+         
+         ;----------------------------------------------------------------------------
+         ; Name:     lcd_write_string_4d_mem
+         ; Purpose:  Display a string of characters on the LCD, at a given location
+         ; Entry:    XH and XL pointing to the start of the string
+         ;           (temp_r16) contains the desired DDRAM address at which to start the display
+         ; Exit:     No parameters
+         ; Notes:    The string must end with a null (0)
+         ;           uses time delays instead of checking the busy flag
+          lcd_write_string_4d_mem:
+C:0001a1 930f                      push r16        ; Preserve Registers
+         
+         ; set up the initial DDRAM address
+C:0001a2 6800                        ori r16, lcd_SetCursor     ; convert the plain address to a set cursor instruction
+C:0001a3 940e 0094                   call lcd_write_instruction_4d    ; set up the first DDRAM address
+C:0001a5 e500                        ldi r16, 80                ; 40 uS delay (min)
+C:0001a6 940e 00c5                   call delayTx1uS
+         
+C:0001a8 910f                      pop r16
+C:0001a9 940e 01ac                 call lcd_append_string_4d_mem
+C:0001ab 9508                      ret
+         
+         ;----------------------------------------------------------------------------
+         ; Name:     lcd_append_string_4d_mem
+         ; Purpose:  Display a string of characters on the LCD, at the current cursor
+         ; Entry:    XH and XL pointing to the start of the string
+         ; Exit:     No parameters
+         ; Notes:    The string must end with a null (0)
+         ;           uses time delays instead of checking the busy flag
+          lcd_append_string_4d_mem:
+C:0001ac 930f                      push r16        ; Preserve Registers
+C:0001ad 93bf                        push XH
+C:0001ae 93af                          push XL
+         
+         ; write the string of characters
+          lcd_write_string_4d_mem_01:
+C:0001af 910d                            ld r16, X+                        ; get a character
+C:0001b0 3000                            cpi r16,  0                        ; check for end of string
+C:0001b1 f031                            breq lcd_write_string_4d_mem_02          ; done
+         
+         ; arrive here if this is a valid character
+C:0001b2 940e 008c                       call lcd_write_character_4d          ; display the character
+C:0001b4 e500                            ldi r16, 80                        ; 40 uS delay (min)
+C:0001b5 940e 00c5                       call delayTx1uS
+C:0001b7 cff7                            rjmp lcd_write_string_4d_mem_01          ; not done, send another character
+         
+         ; arrive here when all characters in the message have been sent to the LCD module
+          lcd_write_string_4d_mem_02:
+C:0001b8 91af                          pop XL                              ; restore pointer registers
+C:0001b9 91bf                        pop XH
+C:0001ba 910f                      pop r16
+C:0001bb 9508                      ret
 
 
 Segment usage:
-   Code      :         1 words (2 bytes)
-   Data      :         0 bytes
+   Code      :       396 words (792 bytes)
+   Data      :        15 bytes
    EEPROM    :         0 bytes
 
 Assembly completed with no errors.

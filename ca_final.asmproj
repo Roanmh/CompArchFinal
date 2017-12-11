@@ -15,7 +15,7 @@
     <Name>ca_final</Name>
     <RootNamespace>ca_final</RootNamespace>
     <ToolchainFlavour>Native</ToolchainFlavour>
-    <EntryFile>$(MSBuildProjectDirectory)\test\timer\timer.asm</EntryFile>
+    <EntryFile>$(MSBuildProjectDirectory)\src\main.asm</EntryFile>
     <KeepTimersRunning>true</KeepTimersRunning>
     <OverrideVtor>false</OverrideVtor>
     <CacheFlash>true</CacheFlash>

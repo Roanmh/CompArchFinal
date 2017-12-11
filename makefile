@@ -3,7 +3,7 @@ NAME=ca_final
 MAIN=main
 OUT_DIR_DEF=mk_def
 ${NAME}.hex: src/${MAIN}.asm
-		avra.exe -I ../includes/ -l ${NAME}.lss -m ${NAME}.mapl src/${MAIN}.asm
+		avra.exe -I include/ -l ${NAME}.lss -m ${NAME}.mapl src/${MAIN}.asm
 
 		mv ${NAME}.lss ${OUT_DIR_DEF}/
 		mv ${NAME}.mapl ${OUT_DIR_DEF}/
