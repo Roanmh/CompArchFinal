@@ -1,18 +1,7 @@
-;- main.asm --------------------------------------------------------------------
-;
-;  Desription:  Main source for a clock functioning on an ATMega328P and LCD
-;               Keypad Sheild
-;  Author:      Roan Martin-Hayden <roanmh@gmail.com>
-;  Date:        Dec 2017
-;-------------------------------------------------------------------------------
+	.nolist
+	.include "m328Pdef.inc"       ; Device
+	.list
 
-
-
-;;; Includes (Non-Function)
-  .nolist
-  .include "m328Pdef.inc"       ; Device
-  .list
-  .include "macros.inc"
 
 
 ;;; Definitions
@@ -74,7 +63,7 @@ hour_str:      .byte 3
 
   ;; Timer Overflow Interupt
   .cseg                         ; This seems needed to avoid errors
-  	.include "LCD-lib.asm"
+  .include "LCD-lib.asm"
 TIMER1_OVR:     incr_time tnth_sec_reg, sec_reg, min_reg, hour_reg
                 hex_to_dec_str_two_dig sec_reg, sec_str ; Convert and store time values
                 hex_to_dec_str_two_dig min_reg, min_str
