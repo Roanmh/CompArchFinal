@@ -1,5 +1,5 @@
 
-AVRA   Ver. 1.3.0 src/main.asm Mon Dec 11 17:52:20 2017
+AVRA   Ver. 1.3.0 src/main.asm Mon Dec 11 19:38:53 2017
 
 
          ;- main.asm --------------------------------------------------------------------
@@ -55,6 +55,34 @@ AVRA   Ver. 1.3.0 src/main.asm Mon Dec 11 17:52:20 2017
             .endmacro
          
          ;----------------------------------------------------------------------------
+         ; Name:     hex_to_dec_str_one_dig
+         ; Purpose:  Convert a number to a NULL terminated ASCII representation with one
+         ;           digit.
+         ; Args:     0 - Register to convert. (16 <= r <= 31) Register is resotored
+         ;               after operation.
+         ;           1 - Address to store at in SRAM (needs 3 bytes for string.)
+         ; Notes:    Decimal String -> Address pointed to by Arg 1
+            .macro hex_to_dec_str_one_dig
+                          push @0
+                            cpi @0, 9
+                            brge hex_to_letter_out_of_range
+                            subi @0, -0x30                   ; Ones Place
+                            jmp hex_to_letter_store
+          hex_to_letter_out_of_range:
+                            ldi @0, '#'
+          hex_to_letter_store:
+                            push XL
+                              push XH
+                                ldi XH, high(@1)                 ; Z = Code/Flash memory address of
+                                ldi XL, low(@1)                  ; Message to be displayed
+                                st X+, @0
+                                clr @0
+                                st X, @0                  ; Terminating Zero
+                              pop XH
+                            pop XL
+                          pop @0
+          .endmacro
+         ;----------------------------------------------------------------------------
          ; Name:     hex_to_dec_str_two_dig
          ; Purpose:  Convert a number to a NULL terminated ASCII representation with two
          ;           digits.
@@ -96,13 +124,13 @@ AVRA   Ver. 1.3.0 src/main.asm Mon Dec 11 17:52:20 2017
          ; Name:     incr_time
          ; Purpose:  Increment a set of registers to represent a hundreth of a second
          ;           passing.
-         ; Args:     0 - Hundreth Second Register
+         ; Args:     0 - Tenth Second Register
          ;           1 - Second Register
          ;           2 - Minute Register
          ;           3 - Hour Register
             .macro incr_time              ;TODO: Fix overflow (no 00 seem on secs)
                                          ;TODO: Fix how it seems to top out
-                          cpi @0, 99
+                          cpi @0, 9
                           brge incr_time_carry_sec
                           inc @0
                           jmp incr_time_end
@@ -199,7 +227,7 @@ AVRA   Ver. 1.3.0 src/main.asm Mon Dec 11 17:52:20 2017
            ;.def temp_r16=r16            ; Included in LCD-lib.asm
             .def temp_r16     = r16
             .def temp_r17     = r17
-            .def hund_sec_reg = r18
+            .def tnth_sec_reg = r18
             .def sec_reg      = r19
             .def min_reg      = r20
             .def hour_reg     = r21
@@ -214,7 +242,8 @@ AVRA   Ver. 1.3.0 src/main.asm Mon Dec 11 17:52:20 2017
            ;.equ t16wgo_lo = (0b00 << WGM10)
          
            ; 16bit Timer Clock Select
-            .equ t16cs = (0b001 << CS10)  ; ClkIO x1 (no prescale)
+           ;.equ t16cs = (0b001 << CS10)  ; ClkIO x1 (no prescale)
+            .equ t16cs = (0b011 << CS10)  ; ClkIO x8
          
            ; 16Bit Timer Interrupt Mask
             .equ t16im = (0b1 << TOIE1)   ; Overflow Interupt Enable
@@ -232,11 +261,10 @@ AVRA   Ver. 1.3.0 src/main.asm Mon Dec 11 17:52:20 2017
          
            ;; Time Value Strings: Null terminated ASCII strings of each time value
            ;; Note: See "" for programed string values
-D:000100    hund_sec_str:  .byte 3
-D:000103    ten_sec_str:   .byte 3
-D:000106    sec_str:       .byte 3
-D:000109    min_str:       .byte 3
-D:00010c    hour_str:      .byte 3
+D:000100    ten_sec_str:   .byte 3
+D:000103    sec_str:       .byte 3
+D:000106    min_str:       .byte 3
+D:000109    hour_str:      .byte 3
          
          ;;; Interupt Vectors
             .cseg
@@ -687,17 +715,17 @@ C:0000ce 9508          ret                                     ; [4]
          
          ; ============================== End of Time Delay Subroutines ==============
           ; ============================== End of Time Delay Subroutines ==============
-C:0000cf   +  TIMER1_OVR:     incr_time hund_sec_reg, sec_reg, min_reg, hour_reg
+C:0000cf   +  TIMER1_OVR:     incr_time tnth_sec_reg, sec_reg, min_reg, hour_reg
          
 
-C:0000cf 3623      cpi hund_sec_reg, 99
+C:0000cf 3029      cpi tnth_sec_reg, 9
 C:0000d0 f41c      brge incr_time_carry_sec
-C:0000d1 9523      inc hund_sec_reg
+C:0000d1 9523      inc tnth_sec_reg
 C:0000d2 940c 00e7 jmp incr_time_end
           incr_time_carry_sec:
 C:0000d4 333b      cpi sec_reg, 59
 C:0000d5 f424      brge incr_time_carry_min
-C:0000d6 2722      clr hund_sec_reg
+C:0000d6 2722      clr tnth_sec_reg
 C:0000d7 9533      inc sec_reg
 C:0000d8 940c 00e7 jmp incr_time_end
           incr_time_carry_min:
@@ -743,7 +771,7 @@ C:0000fa 93af      push XL
 C:0000fb 93bf      push XH
 C:0000fc e0b1      ldi XH, high(sec_str)                 
 
-C:0000fd e0a6      ldi XL, low(sec_str)                  
+C:0000fd e0a3      ldi XL, low(sec_str)                  
 
 C:0000fe 930d      st X+, r16
 C:0000ff 933d      st X+, sec_reg
@@ -783,7 +811,7 @@ C:00011a 93af      push XL
 C:00011b 93bf      push XH
 C:00011c e0b1      ldi XH, high(min_str)                 
 
-C:00011d e0a9      ldi XL, low(min_str)                  
+C:00011d e0a6      ldi XL, low(min_str)                  
 
 C:00011e 930d      st X+, r16
 C:00011f 934d      st X+, min_reg
@@ -823,7 +851,7 @@ C:00013a 93af      push XL
 C:00013b 93bf      push XH
 C:00013c e0b1      ldi XH, high(hour_str)                 
 
-C:00013d e0ac      ldi XL, low(hour_str)                  
+C:00013d e0a9      ldi XL, low(hour_str)                  
 
 C:00013e 930d      st X+, r16
 C:00013f 935d      st X+, hour_reg
@@ -840,13 +868,13 @@ C:000147 e000                      ldi temp_r16, $00           ; Set cursor to B
 C:000148 6800                      ori temp_r16, lcd_SetCursor	     ; convert the plain address to a set cursor instruction
 C:000149 940e 0094                 call lcd_write_instruction_4d
          
-C:00014b   +                  	disp_from_sram hour_str, clk_hr_loc
+C:00014b   +                  disp_from_sram hour_str, clk_hr_loc
 C:00014b 930f      push r16
 C:00014c 93af      push XL
 C:00014d 93bf      push XH
 C:00014e e0b1      ldi XH, high(hour_str) 
 
-C:00014f e0ac      ldi XL, low(hour_str)  
+C:00014f e0a9      ldi XL, low(hour_str)  
 
 C:000150 e000      ldi r16, clk_hr_loc      
 
@@ -854,7 +882,7 @@ C:000151 940e 01a1 call lcd_write_string_4d_mem
 C:000153 91bf      pop XH
 C:000154 91af      pop XL
 C:000155 910f      pop r16
-C:000156   +  	                disp_from_pm colon_str, clk_cln1_loc
+C:000156   +                  disp_from_pm colon_str, clk_cln1_loc
 C:000156 930f      push r16
 C:000157 93ef      push ZL
 C:000158 93ff      push ZH
@@ -868,13 +896,13 @@ C:00015c 940e 0076 call lcd_write_string_4d
 C:00015e 910f      pop r16
 C:00015f 91ff      pop ZH
 C:000160 91ef      pop ZL
-C:000161   +  	                disp_from_sram min_str, clk_mn_loc
+C:000161   +                  disp_from_sram min_str, clk_mn_loc
 C:000161 930f      push r16
 C:000162 93af      push XL
 C:000163 93bf      push XH
 C:000164 e0b1      ldi XH, high(min_str) 
 
-C:000165 e0a9      ldi XL, low(min_str)  
+C:000165 e0a6      ldi XL, low(min_str)  
 
 C:000166 e003      ldi r16, clk_mn_loc      
 
@@ -882,7 +910,7 @@ C:000167 940e 01a1 call lcd_write_string_4d_mem
 C:000169 91bf      pop XH
 C:00016a 91af      pop XL
 C:00016b 910f      pop r16
-C:00016c   +  	                disp_from_pm colon_str, clk_cln2_loc
+C:00016c   +                  disp_from_pm colon_str, clk_cln2_loc
 C:00016c 930f      push r16
 C:00016d 93ef      push ZL
 C:00016e 93ff      push ZH
@@ -896,13 +924,13 @@ C:000172 940e 0076 call lcd_write_string_4d
 C:000174 910f      pop r16
 C:000175 91ff      pop ZH
 C:000176 91ef      pop ZL
-C:000177   +  	                disp_from_sram sec_str, clk_sc_loc
+C:000177   +                  disp_from_sram sec_str, clk_sc_loc
 C:000177 930f      push r16
 C:000178 93af      push XL
 C:000179 93bf      push XH
 C:00017a e0b1      ldi XH, high(sec_str) 
 
-C:00017b e0a6      ldi XL, low(sec_str)  
+C:00017b e0a3      ldi XL, low(sec_str)  
 
 C:00017c e006      ldi r16, clk_sc_loc      
 
@@ -910,11 +938,6 @@ C:00017d 940e 01a1 call lcd_write_string_4d_mem
 C:00017f 91bf      pop XH
 C:000180 91af      pop XL
 C:000181 910f      pop r16
-                         ;; disp_from_sram_append hour_str
-                         ;; disp_from_pm colon_str, clk_cln1_loc
-                         ;; disp_from_sram_append min_str
-                         ;; disp_from_pm colon_str, clk_cln2_loc
-                         ;; disp_from_sram_append sec_str
 C:000182 9518                      reti
          
          
@@ -931,7 +954,7 @@ C:000186 bf0e      out SPH,r16
 C:000187 e000                      ldi temp_r16, t16wgm_lo
 C:000188 9300 0080                 sts TCCR1A, temp_r16
          
-C:00018a e001                      ldi temp_r16, t16cs         ; Clock Source (Curr: x1 Prescale)
+C:00018a e003                      ldi temp_r16, t16cs         ; Clock Source (Curr: x1 Prescale)
 C:00018b 6000                      ori temp_r16, t16wgm_hi
 C:00018c 9300 0081                 sts TCCR1B, temp_r16
          
@@ -951,7 +974,7 @@ C:000197 940e 0094                 call lcd_write_instruction_4d
          
          
            ;; Initialize Counters
-C:000199 2722                      clr hund_sec_reg
+C:000199 2722                      clr tnth_sec_reg
 C:00019a 2733                      clr sec_reg
 C:00019b 2744                      clr min_reg
 C:00019c 2755                      clr hour_reg
@@ -1033,7 +1056,7 @@ C:0001bb 9508                      ret
 
 Segment usage:
    Code      :       396 words (792 bytes)
-   Data      :        15 bytes
+   Data      :        12 bytes
    EEPROM    :         0 bytes
 
 Assembly completed with no errors.

@@ -726,7 +726,7 @@ SPMRaddr	C	0032	50
 INT_VECTORS_SIZE	C	0034	52
 t16wgm_hi	C	0000	0
 t16wgm_lo	C	0000	0
-t16cs		C	0001	1
+t16cs		C	0003	3
 t16im		C	0001	1
 clk_hr_loc	C	0000	0
 clk_cln1_loc	C	0002	2
@@ -766,11 +766,10 @@ __DEVICE__	V	0026	38
 __FLASH_SIZE__	V	4000	16384
 __EEPROM_SIZE__	V	0400	1024
 __RAM_SIZE__	V	0800	2048
-hund_sec_str	L	0100	256
-ten_sec_str	L	0103	259
-sec_str		L	0106	262
-min_str		L	0109	265
-hour_str	L	010c	268
+ten_sec_str	L	0100	256
+sec_str		L	0103	259
+min_str		L	0106	262
+hour_str	L	0109	265
 lcd_init_4d	L	0034	52
 lcd_write_string_4d	L	0076	118
 lcd_write_string_4d_01	L	0080	128

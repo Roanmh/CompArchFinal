@@ -20,7 +20,7 @@
   ;.def temp_r16=r16            ; Included in LCD-lib.asm
   .def temp_r16     = r16
   .def temp_r17     = r17
-  .def hund_sec_reg = r18
+  .def tnth_sec_reg = r18
   .def sec_reg      = r19
   .def min_reg      = r20
   .def hour_reg     = r21
@@ -35,7 +35,8 @@
   ;.equ t16wgo_lo = (0b00 << WGM10)
 
   ; 16bit Timer Clock Select
-  .equ t16cs = (0b001 << CS10)  ; ClkIO x1 (no prescale)
+  ;.equ t16cs = (0b001 << CS10)  ; ClkIO x1 (no prescale)
+  .equ t16cs = (0b011 << CS10)  ; ClkIO x8
 
   ; 16Bit Timer Interrupt Mask
   .equ t16im = (0b1 << TOIE1)   ; Overflow Interupt Enable
@@ -53,7 +54,6 @@
 
   ;; Time Value Strings: Null terminated ASCII strings of each time value
   ;; Note: See "" for programed string values
-hund_sec_str:  .byte 3
 ten_sec_str:   .byte 3
 sec_str:       .byte 3
 min_str:       .byte 3
@@ -75,25 +75,20 @@ hour_str:      .byte 3
   ;; Timer Overflow Interupt
   .cseg                         ; This seems needed to avoid errors
   	.include "LCD-lib.asm"
-TIMER1_OVR:     incr_time hund_sec_reg, sec_reg, min_reg, hour_reg
+TIMER1_OVR:     incr_time tnth_sec_reg, sec_reg, min_reg, hour_reg
                 hex_to_dec_str_two_dig sec_reg, sec_str ; Convert and store time values
                 hex_to_dec_str_two_dig min_reg, min_str
                 hex_to_dec_str_two_dig hour_reg, hour_str
 
                 ldi temp_r16, $00           ; Set cursor to Begining of first line
                 ori temp_r16, lcd_SetCursor	     ; convert the plain address to a set cursor instruction
-                call lcd_write_instruction_4d    ; 80us delay
+                call lcd_write_instruction_4d
 
-                	disp_from_sram hour_str, clk_hr_loc  ; 320us delay
-	                disp_from_pm colon_str, clk_cln1_loc ; 240us delay
-	                disp_from_sram min_str, clk_mn_loc   ; 320us delay
-	                disp_from_pm colon_str, clk_cln2_loc ; 240us delay
-	                disp_from_sram sec_str, clk_sc_loc   ; 320us delay
-                ;; disp_from_sram_append hour_str
-                ;; disp_from_pm colon_str, clk_cln1_loc
-                ;; disp_from_sram_append min_str
-                ;; disp_from_pm colon_str, clk_cln2_loc
-                ;; disp_from_sram_append sec_str
+                disp_from_sram hour_str, clk_hr_loc
+                disp_from_pm colon_str, clk_cln1_loc
+                disp_from_sram min_str, clk_mn_loc
+                disp_from_pm colon_str, clk_cln2_loc
+                disp_from_sram sec_str, clk_sc_loc
                 reti
 
 
@@ -126,7 +121,7 @@ RESET:          init_sp         ; Initialize the Stack Pointer
 
 
   ;; Initialize Counters
-                clr hund_sec_reg
+                clr tnth_sec_reg
                 clr sec_reg
                 clr min_reg
                 clr hour_reg

@@ -38,6 +38,34 @@ int_div_done:
   .endmacro
 
 ;----------------------------------------------------------------------------
+; Name:     hex_to_dec_str_one_dig
+; Purpose:  Convert a number to a NULL terminated ASCII representation with one
+;           digit.
+; Args:     0 - Register to convert. (16 <= r <= 31) Register is resotored
+;               after operation.
+;           1 - Address to store at in SRAM (needs 3 bytes for string.)
+; Notes:    Decimal String -> Address pointed to by Arg 1
+  .macro hex_to_dec_str_one_dig
+                push @0
+                  cpi @0, 9
+                  brge hex_to_letter_out_of_range
+                  subi @0, -0x30                   ; Ones Place
+                  jmp hex_to_letter_store
+hex_to_letter_out_of_range:
+                  ldi @0, '#'
+hex_to_letter_store:
+                  push XL
+                    push XH
+                      ldi XH, high(@1)                 ; Z = Code/Flash memory address of
+                      ldi XL, low(@1)                  ; Message to be displayed
+                      st X+, @0
+                      clr @0
+                      st X, @0                  ; Terminating Zero
+                    pop XH
+                  pop XL
+                pop @0
+.endmacro
+;----------------------------------------------------------------------------
 ; Name:     hex_to_dec_str_two_dig
 ; Purpose:  Convert a number to a NULL terminated ASCII representation with two
 ;           digits.
@@ -79,13 +107,13 @@ hex_to_letter_store:
 ; Name:     incr_time
 ; Purpose:  Increment a set of registers to represent a hundreth of a second
 ;           passing.
-; Args:     0 - Hundreth Second Register
+; Args:     0 - Tenth Second Register
 ;           1 - Second Register
 ;           2 - Minute Register
 ;           3 - Hour Register
   .macro incr_time              ;TODO: Fix overflow (no 00 seem on secs)
                                 ;TODO: Fix how it seems to top out
-                cpi @0, 99
+                cpi @0, 9
                 brge incr_time_carry_sec
                 inc @0
                 jmp incr_time_end
