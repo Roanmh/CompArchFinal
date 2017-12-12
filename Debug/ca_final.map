@@ -1,5 +1,5 @@
 
-AVRASM ver. 2.2.7  C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm Tue Dec 12 02:30:36 2017
+AVRASM ver. 2.2.7  C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm Tue Dec 12 13:25:12 2017
 
 
 EQU  SIGNATURE_000 0000001e
@@ -704,10 +704,12 @@ DEF  hour_reg     r21
 DEF  adc_res      r22
 DEF  time_set     r23
 DEF  btn_prs      r24
-EQU  t16wgm_hi    00000000
+EQU  ocr_low      000000ff
+EQU  ocr_high     000000ff
+EQU  t16wgm_hi    00000008
 EQU  t16wgm_lo    00000000
-EQU  t16cs        00000002
-EQU  t16im        00000001
+EQU  t16cs        00000004
+EQU  t16im        00000002
 EQU  prr_startup  000000fe
 EQU  adc_mul_sel  00000060
 EQU  di_dis_startup 00000001
@@ -770,25 +772,25 @@ CSEG delayYx1mS   000000b2
 CSEG delay1mS     000000bc
 CSEG delay1mS_01  000000c0
 CSEG TIMER1_OVR_SET 000000e9
-CSEG incr_time_carry_sec@incr_time@2700 000000d6
-CSEG incr_time_carry_min@incr_time@2700 000000dc
-CSEG incr_time_carry_hour@incr_time@2700 000000e2
-CSEG incr_time_overflow@incr_time@2700 000000e8
-CSEG incr_time_end@incr_time@2700 000000e9
-CSEG int_div_loop@int_div@2737 000000f0
-CSEG int_div_done@int_div@2737 000000f6
-CSEG hex_to_letter_out_of_range@hex_to_dec_str_two_dig@2729 000000fa
-CSEG hex_to_letter_store@hex_to_dec_str_two_dig@2729 000000fc
-CSEG int_div_loop@int_div@2776 00000110
-CSEG int_div_done@int_div@2776 00000116
-CSEG hex_to_letter_out_of_range@hex_to_dec_str_two_dig@2768 0000011a
-CSEG hex_to_letter_store@hex_to_dec_str_two_dig@2768 0000011c
-CSEG int_div_loop@int_div@2815 00000130
-CSEG int_div_done@int_div@2815 00000136
-CSEG hex_to_letter_out_of_range@hex_to_dec_str_two_dig@2807 0000013a
-CSEG hex_to_letter_store@hex_to_dec_str_two_dig@2807 0000013c
-CSEG lcd_write_string_4d_mem 000001f1
-CSEG colon_str    000001f0
+CSEG incr_time_carry_sec@incr_time@2707 000000d6
+CSEG incr_time_carry_min@incr_time@2707 000000dc
+CSEG incr_time_carry_hour@incr_time@2707 000000e2
+CSEG incr_time_overflow@incr_time@2707 000000e8
+CSEG incr_time_end@incr_time@2707 000000e9
+CSEG int_div_loop@int_div@2744 000000f0
+CSEG int_div_done@int_div@2744 000000f6
+CSEG hex_to_letter_out_of_range@hex_to_dec_str_two_dig@2736 000000fa
+CSEG hex_to_letter_store@hex_to_dec_str_two_dig@2736 000000fc
+CSEG int_div_loop@int_div@2783 00000110
+CSEG int_div_done@int_div@2783 00000116
+CSEG hex_to_letter_out_of_range@hex_to_dec_str_two_dig@2775 0000011a
+CSEG hex_to_letter_store@hex_to_dec_str_two_dig@2775 0000011c
+CSEG int_div_loop@int_div@2822 00000130
+CSEG int_div_done@int_div@2822 00000136
+CSEG hex_to_letter_out_of_range@hex_to_dec_str_two_dig@2814 0000013a
+CSEG hex_to_letter_store@hex_to_dec_str_two_dig@2814 0000013c
+CSEG lcd_write_string_4d_mem 000001f7
+CSEG colon_str    000001f6
 CSEG TIMER1_OVER_END 00000184
 CSEG ADC_B1       0000018b
 CSEG ADC_UPD_DISP 000001b7
@@ -801,7 +803,7 @@ CSEG ADC_B5       000001b0
 CSEG ADC_B4_1     000001ad
 CSEG ADC_B5_2     000001b5
 CSEG ADC_B5_3     000001b6
-CSEG wait_loop    000001ee
-CSEG lcd_append_string_4d_mem 000001fc
-CSEG lcd_write_string_4d_mem_01 000001ff
-CSEG lcd_write_string_4d_mem_02 00000208
+CSEG wait_loop    000001f4
+CSEG lcd_append_string_4d_mem 00000202
+CSEG lcd_write_string_4d_mem_01 00000205
+CSEG lcd_write_string_4d_mem_02 0000020e

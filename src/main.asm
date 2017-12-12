@@ -31,19 +31,23 @@
 
   ;; Contstant Definitions
 
+  ; Output Compare Register
+  .equ ocr_low  = $FF
+  .equ ocr_high = $5F
+
   ; 16bit Timer Waveform Generation Mode
-  .equ t16wgm_hi = (0b00 << WGM12)   ; Normal Mode
+  ;.equ t16wgm_hi = (0b00 << WGM12)   ; Normal Mode
+  ;.equ t16wgm_lo = (0b00 << WGM10)
+  .equ t16wgm_hi = (0b01 << WGM12)   ; CTC Mode
   .equ t16wgm_lo = (0b00 << WGM10)
-  ;.equ t16wgm_hi = (0b01 << WGM12)   ; CTC Mode (For Future Reference)
-  ;.equ t16wgo_lo = (0b00 << WGM10)
 
   ; 16bit Timer Clock Select
-  ;.equ t16cs = (0b001 << CS10)  ; ClkIO x1 (no prescale)
+  ;; .equ t16cs = (0b001 << CS10)  ; ClkIO x1 (no prescale)
   .equ t16cs = (0b011 << CS10)  ; ClkIO x8
 
   ; 16Bit Timer Interrupt Mask
-  .equ t16im = (0b1 << TOIE1)   ; Overflow Interupt Enable
-  ;.equ t16im = (0b1 << OCIEA)   ; Output Compare Register A Int. En.
+  ;.equ t16im = (0b1 << TOIE1)   ; Overflow Interupt Enable
+  .equ t16im = (0b1 << OCIE1A)   ; Output Compare Register A Int. En.
 
   ; Power Reduction Register
   .equ prr_startup = 0b11111110     ; Turn on ADC
@@ -86,11 +90,13 @@ hour_str:      .byte 3
 ;;; Interupt Vectors
   .cseg
   .org 0x0000
-                jmp RESET       ; Reset Interupt Vecotor
+                jmp RESET        ; Reset Interupt Vecotor
+  .org 0x0016
+                jmp TIMER1_OVR   ; Timer Output Compare Interupt
   .org 0x001A
-                jmp TIMER1_OVR  ; Timer Overflow Interupt Vector
+                jmp TIMER1_OVR   ; Timer Overflow Interupt Vector
   .org 0x002A
-                jmp ADC_INT     ; ADC Conversion Complete Interrupt
+                jmp ADC_INT      ; ADC Conversion Complete Interrupt
 
 
 
@@ -192,6 +198,12 @@ RESET:          init_sp         ; Initialize the Stack Pointer
                 ldi temp_r16, $00 ; TODO: Add constant for this
                 sts TCCR1C, temp_r16
 
+  ;;  -Output Compare Registers
+                ldi temp_r17, ocr_high
+                ldi temp_r16, ocr_low
+                sts OCR1AH, temp_r17
+                sts OCR1AL, temp_r16
+
   ;;  -Interupt Mask
                 ldi temp_r16, t16im
                 sts TIMSK1, temp_r16
@@ -237,8 +249,8 @@ RESET:          init_sp         ; Initialize the Stack Pointer
                 clr sec_reg
                 clr min_reg
                 clr hour_reg
-				clr adc_res
-				clr time_set
+                clr adc_res
+                clr time_set
 
   ;; Global Interupt Enable
                 sei

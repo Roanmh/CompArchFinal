@@ -1,5 +1,5 @@
 
-AVRA   Ver. 1.3.0 src/main.asm Tue Dec 12 02:38:27 2017
+AVRA   Ver. 1.3.0 src/main.asm Tue Dec 12 13:45:31 2017
 
 
          ;- main.asm --------------------------------------------------------------------
@@ -8,6 +8,7 @@ AVRA   Ver. 1.3.0 src/main.asm Tue Dec 12 02:38:27 2017
          ;               Keypad Sheild
          ;  Author:      Roan Martin-Hayden <roanmh@gmail.com>
          ;  Date:        Dec 2017
+           ;; Note: Much of the ADC Setup Code is based off of work by Mick Walters
          ;-------------------------------------------------------------------------------
          
          
@@ -237,19 +238,23 @@ AVRA   Ver. 1.3.0 src/main.asm Tue Dec 12 02:38:27 2017
          
            ;; Contstant Definitions
          
+           ; Output Compare Register
+            .equ ocr_low  = $FF
+            .equ ocr_high = $5F
+         
            ; 16bit Timer Waveform Generation Mode
-            .equ t16wgm_hi = (0b00 << WGM12)   ; Normal Mode
+           ;.equ t16wgm_hi = (0b00 << WGM12)   ; Normal Mode
+           ;.equ t16wgm_lo = (0b00 << WGM10)
+            .equ t16wgm_hi = (0b01 << WGM12)   ; CTC Mode
             .equ t16wgm_lo = (0b00 << WGM10)
-           ;.equ t16wgm_hi = (0b01 << WGM12)   ; CTC Mode (For Future Reference)
-           ;.equ t16wgo_lo = (0b00 << WGM10)
          
            ; 16bit Timer Clock Select
-           ;.equ t16cs = (0b001 << CS10)  ; ClkIO x1 (no prescale)
-            .equ t16cs = (0b010 << CS10)  ; ClkIO x8
+           ;; .equ t16cs = (0b001 << CS10)  ; ClkIO x1 (no prescale)
+            .equ t16cs = (0b011 << CS10)  ; ClkIO x8
          
            ; 16Bit Timer Interrupt Mask
-            .equ t16im = (0b1 << TOIE1)   ; Overflow Interupt Enable
-           ;.equ t16im = (0b1 << OCIEA)   ; Output Compare Register A Int. En.
+           ;.equ t16im = (0b1 << TOIE1)   ; Overflow Interupt Enable
+            .equ t16im = (0b1 << OCIE1A)   ; Output Compare Register A Int. En.
          
            ; Power Reduction Register
             .equ prr_startup = 0b11111110     ; Turn on ADC
@@ -292,11 +297,13 @@ D:000109    hour_str:      .byte 3
          ;;; Interupt Vectors
             .cseg
             .org 0x0000
-C:000000 940c 01b8                 jmp RESET       ; Reset Interupt Vecotor
+C:000000 940c 01b8                 jmp RESET        ; Reset Interupt Vecotor
+            .org 0x0016
+C:000016 940c 00cf                 jmp TIMER1_OVR   ; Timer Output Compare Interupt
             .org 0x001A
-C:00001a 940c 00cf                 jmp TIMER1_OVR  ; Timer Overflow Interupt Vector
+C:00001a 940c 00cf                 jmp TIMER1_OVR   ; Timer Overflow Interupt Vector
             .org 0x002A
-C:00002a 940c 0185                 jmp ADC_INT     ; ADC Conversion Complete Interrupt
+C:00002a 940c 0185                 jmp ADC_INT      ; ADC Conversion Complete Interrupt
          
          
          
@@ -904,7 +911,7 @@ C:000151 e0a9      ldi XL, low(hour_str)
 
 C:000152 e000      ldi r16, clk_hr_loc      
 
-C:000153 940e 01f1 call lcd_write_string_4d_mem
+C:000153 940e 01f7 call lcd_write_string_4d_mem
 C:000155 91bf      pop XH
 C:000156 91af      pop XL
 C:000157 910f      pop r16
@@ -914,7 +921,7 @@ C:000159 93ef      push ZL
 C:00015a 93ff      push ZH
 C:00015b e0f1      ldi ZH, high(colon_str) 
 
-C:00015c efe0      ldi ZL, low(colon_str)  
+C:00015c efe6      ldi ZL, low(colon_str)  
 
 C:00015d e002      ldi r16, clk_cln1_loc      
 
@@ -932,7 +939,7 @@ C:000167 e0a6      ldi XL, low(min_str)
 
 C:000168 e003      ldi r16, clk_mn_loc      
 
-C:000169 940e 01f1 call lcd_write_string_4d_mem
+C:000169 940e 01f7 call lcd_write_string_4d_mem
 C:00016b 91bf      pop XH
 C:00016c 91af      pop XL
 C:00016d 910f      pop r16
@@ -942,7 +949,7 @@ C:00016f 93ef      push ZL
 C:000170 93ff      push ZH
 C:000171 e0f1      ldi ZH, high(colon_str) 
 
-C:000172 efe0      ldi ZL, low(colon_str)  
+C:000172 efe6      ldi ZL, low(colon_str)  
 
 C:000173 e005      ldi r16, clk_cln2_loc      
 
@@ -960,7 +967,7 @@ C:00017d e0a3      ldi XL, low(sec_str)
 
 C:00017e e006      ldi r16, clk_sc_loc      
 
-C:00017f 940e 01f1 call lcd_write_string_4d_mem
+C:00017f 940e 01f7 call lcd_write_string_4d_mem
 C:000181 91bf      pop XH
 C:000182 91af      pop XL
 C:000183 910f      pop r16
@@ -1037,77 +1044,83 @@ C:0001bb bf0e      out SPH,r16
 C:0001bc e000                      ldi temp_r16, t16wgm_lo
 C:0001bd 9300 0080                 sts TCCR1A, temp_r16
          
-C:0001bf e002                      ldi temp_r16, t16cs         ; Clock Source (Curr: x1 Prescale)
-C:0001c0 6000                      ori temp_r16, t16wgm_hi
+C:0001bf e003                      ldi temp_r16, t16cs         ; Clock Source (Curr: x1 Prescale)
+C:0001c0 6008                      ori temp_r16, t16wgm_hi
 C:0001c1 9300 0081                 sts TCCR1B, temp_r16
          
 C:0001c3 e000                      ldi temp_r16, $00 ; TODO: Add constant for this
 C:0001c4 9300 0082                 sts TCCR1C, temp_r16
          
+           ;;  -Output Compare Registers
+C:0001c6 e51f                      ldi temp_r17, ocr_high
+C:0001c7 ef0f                      ldi temp_r16, ocr_low
+C:0001c8 9310 0089                 sts OCR1AH, temp_r17
+C:0001ca 9300 0088                 sts OCR1AL, temp_r16
+         
            ;;  -Interupt Mask
-C:0001c6 e001                      ldi temp_r16, t16im
-C:0001c7 9300 006f                 sts TIMSK1, temp_r16
+C:0001cc e002                      ldi temp_r16, t16im
+C:0001cd 9300 006f                 sts TIMSK1, temp_r16
          
            ;; Power Reduction Register
-C:0001c9 7f0e                      andi temp_r16, prr_startup
-C:0001ca 9300 0064                 sts PRR, temp_r16
+C:0001cf 7f0e                      andi temp_r16, prr_startup
+C:0001d0 9300 0064                 sts PRR, temp_r16
          
            ;; ADC Multiplexer Selection Register
-C:0001cc e600                      ldi temp_r16, adc_mul_sel
-C:0001cd 9300 007c                 sts ADMUX, temp_r16
+C:0001d2 e600                      ldi temp_r16, adc_mul_sel
+C:0001d3 9300 007c                 sts ADMUX, temp_r16
          
            ;; Digital Input Disable Register
-C:0001cf e001                      ldi temp_r16, di_dis_startup
-C:0001d0 9300 007e                 sts DIDR0, temp_r16
+C:0001d5 e001                      ldi temp_r16, di_dis_startup
+C:0001d6 9300 007e                 sts DIDR0, temp_r16
          
            ;; External Interrupt Control Register A
-C:0001d2 e003                      ldi temp_r16, ext_int_ctrl_a
-C:0001d3 9300 0069                 sts EICRA,temp_r16
+C:0001d8 e003                      ldi temp_r16, ext_int_ctrl_a
+C:0001d9 9300 0069                 sts EICRA,temp_r16
          
            ;; External Interrupt Mask Register
-C:0001d5 e000                      ldi temp_r16, ext_int_msk
-C:0001d6 9300 001d                 sts EIMSK, temp_r16
+C:0001db e000                      ldi temp_r16, ext_int_msk
+C:0001dc 9300 001d                 sts EIMSK, temp_r16
          
            ;; ADC Control and Status Register A
-C:0001d8 ee0f                      ldi temp_r16, adc_ctrl_a
-C:0001d9 9300 007a                 sts ADCSRA, temp_r16
+C:0001de ee0f                      ldi temp_r16, adc_ctrl_a
+C:0001df 9300 007a                 sts ADCSRA, temp_r16
          
            ;; ADC Control and Status Register B
-C:0001db e000                      ldi temp_r16, adc_ctrl_b
-C:0001dc 9300 007b                 sts ADCSRB, temp_r16
+C:0001e1 e000                      ldi temp_r16, adc_ctrl_b
+C:0001e2 9300 007b                 sts ADCSRB, temp_r16
          
          
-C:0001de 940e 0034                 call lcd_init_4d              ; Initialize LCD display for 4-bit interface
+C:0001e4 940e 0034                 call lcd_init_4d              ; Initialize LCD display for 4-bit interface
          
            ;; Clear Display Instruction
-C:0001e0 e001                      ldi temp_r16, lcd_Clear       ; r16 = clear display instruction
-C:0001e1 940e 0094                 call lcd_write_instruction_4d
+C:0001e6 e001                      ldi temp_r16, lcd_Clear       ; r16 = clear display instruction
+C:0001e7 940e 0094                 call lcd_write_instruction_4d
          
          
            ;; Initialize Counters
-C:0001e3 2722                      clr tnth_sec_reg
-C:0001e4 2733                      clr sec_reg
-C:0001e5 2744                      clr min_reg
-C:0001e6 2755                      clr hour_reg
-C:0001e7 2766      				clr adc_res
-C:0001e8 2777      				clr time_set
+C:0001e9 2722                      clr tnth_sec_reg
+C:0001ea 2733                      clr sec_reg
+C:0001eb 2744                      clr min_reg
+C:0001ec 2755                      clr hour_reg
+C:0001ed 2766                      clr adc_res
+C:0001ee 2777                      clr time_set
          
            ;; Global Interupt Enable
-C:0001e9 9478                      sei
+C:0001ef 9478                      sei
          
            ;; Intialization of port for proper analog input
-C:0001ea ef0e                      ldi temp_r16, 0b11111110
-C:0001eb b907                      out DDRC,temp_r16 ; set PortC to output, ADC0 input
-C:0001ec 2700                      clr temp_r16
-C:0001ed b908                      out PortC,temp_r16 ; set PortC to 0V
+C:0001f0 ef0e                      ldi temp_r16, 0b11111110
+C:0001f1 b907                      out DDRC,temp_r16 ; set PortC to output, ADC0 input
+C:0001f2 2700                      clr temp_r16
+C:0001f3 b908                      out PortC,temp_r16 ; set PortC to 0V
          
            ;; Waiting Loop
-C:0001ee 940c 01ee wait_loop:      jmp wait_loop
+C:0001f4 940c 01f4 wait_loop:      jmp wait_loop
          
          ;;; Program Constants
             .cseg
           colon_str:      .db ":", 0
-C:0001F0 3A00
+C:0001F6 3A00
          ;;; Function Libraries
             .cseg
            ;; .include "LCD-lib.asm"
@@ -1129,17 +1142,17 @@ C:0001F0 3A00
          ; Notes:    The string must end with a null (0)
          ;           uses time delays instead of checking the busy flag
           lcd_write_string_4d_mem:
-C:0001f1 930f                      push r16        ; Preserve Registers
+C:0001f7 930f                      push r16        ; Preserve Registers
          
          ; set up the initial DDRAM address
-C:0001f2 6800                        ori r16, lcd_SetCursor     ; convert the plain address to a set cursor instruction
-C:0001f3 940e 0094                   call lcd_write_instruction_4d    ; set up the first DDRAM address
-C:0001f5 e500                        ldi r16, 80                ; 40 uS delay (min)
-C:0001f6 940e 00c5                   call delayTx1uS
+C:0001f8 6800                        ori r16, lcd_SetCursor     ; convert the plain address to a set cursor instruction
+C:0001f9 940e 0094                   call lcd_write_instruction_4d    ; set up the first DDRAM address
+C:0001fb e500                        ldi r16, 80                ; 40 uS delay (min)
+C:0001fc 940e 00c5                   call delayTx1uS
          
-C:0001f8 910f                      pop r16
-C:0001f9 940e 01fc                 call lcd_append_string_4d_mem
-C:0001fb 9508                      ret
+C:0001fe 910f                      pop r16
+C:0001ff 940e 0202                 call lcd_append_string_4d_mem
+C:000201 9508                      ret
          
          ;----------------------------------------------------------------------------
          ; Name:     lcd_append_string_4d_mem
@@ -1149,32 +1162,32 @@ C:0001fb 9508                      ret
          ; Notes:    The string must end with a null (0)
          ;           uses time delays instead of checking the busy flag
           lcd_append_string_4d_mem:
-C:0001fc 930f                      push r16        ; Preserve Registers
-C:0001fd 93bf                        push XH
-C:0001fe 93af                          push XL
+C:000202 930f                      push r16        ; Preserve Registers
+C:000203 93bf                        push XH
+C:000204 93af                          push XL
          
          ; write the string of characters
           lcd_write_string_4d_mem_01:
-C:0001ff 910d                            ld r16, X+                        ; get a character
-C:000200 3000                            cpi r16,  0                        ; check for end of string
-C:000201 f031                            breq lcd_write_string_4d_mem_02          ; done
+C:000205 910d                            ld r16, X+                        ; get a character
+C:000206 3000                            cpi r16,  0                        ; check for end of string
+C:000207 f031                            breq lcd_write_string_4d_mem_02          ; done
          
          ; arrive here if this is a valid character
-C:000202 940e 008c                       call lcd_write_character_4d          ; display the character
-C:000204 e500                            ldi r16, 80                        ; 40 uS delay (min)
-C:000205 940e 00c5                       call delayTx1uS
-C:000207 cff7                            rjmp lcd_write_string_4d_mem_01          ; not done, send another character
+C:000208 940e 008c                       call lcd_write_character_4d          ; display the character
+C:00020a e500                            ldi r16, 80                        ; 40 uS delay (min)
+C:00020b 940e 00c5                       call delayTx1uS
+C:00020d cff7                            rjmp lcd_write_string_4d_mem_01          ; not done, send another character
          
          ; arrive here when all characters in the message have been sent to the LCD module
           lcd_write_string_4d_mem_02:
-C:000208 91af                          pop XL                              ; restore pointer registers
-C:000209 91bf                        pop XH
-C:00020a 910f                      pop r16
-C:00020b 9508                      ret
+C:00020e 91af                          pop XL                              ; restore pointer registers
+C:00020f 91bf                        pop XH
+C:000210 910f                      pop r16
+C:000211 9508                      ret
 
 
 Segment usage:
-   Code      :       478 words (956 bytes)
+   Code      :       486 words (972 bytes)
    Data      :        12 bytes
    EEPROM    :         0 bytes
 

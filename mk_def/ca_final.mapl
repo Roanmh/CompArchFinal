@@ -724,10 +724,12 @@ ACIaddr		C	002e	46
 TWIaddr		C	0030	48
 SPMRaddr	C	0032	50
 INT_VECTORS_SIZE	C	0034	52
-t16wgm_hi	C	0000	0
+ocr_low		C	00ff	255
+ocr_high	C	005f	95
+t16wgm_hi	C	0008	8
 t16wgm_lo	C	0000	0
-t16cs		C	0002	2
-t16im		C	0001	1
+t16cs		C	0003	3
+t16im		C	0002	2
 prr_startup	C	00fe	254
 adc_mul_sel	C	0060	96
 di_dis_startup	C	0001	1
@@ -806,10 +808,10 @@ ADC_B5_2	L	01b5	437
 ADC_B5_3	L	01b6	438
 ADC_UPD_DISP	L	01b7	439
 RESET		L	01b8	440
-wait_loop	L	01ee	494
-colon_str	L	01f0	496
-lcd_write_string_4d_mem	L	01f1	497
-lcd_append_string_4d_mem	L	01fc	508
-lcd_write_string_4d_mem_01	L	01ff	511
-lcd_write_string_4d_mem_02	L	0208	520
+wait_loop	L	01f4	500
+colon_str	L	01f6	502
+lcd_write_string_4d_mem	L	01f7	503
+lcd_append_string_4d_mem	L	0202	514
+lcd_write_string_4d_mem_01	L	0205	517
+lcd_write_string_4d_mem_02	L	020e	526
 
