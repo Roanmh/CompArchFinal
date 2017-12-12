@@ -118,21 +118,21 @@ hex_to_letter_store:
                 inc @0
                 jmp incr_time_end
 incr_time_carry_sec:
+                clr @0
                 cpi @1, 59
                 brge incr_time_carry_min
-                clr @0
                 inc @1
                 jmp incr_time_end
 incr_time_carry_min:
+                clr @1
                 cpi @2, 59
                 brge incr_time_carry_hour
-                clr @1
                 inc @2
                 jmp incr_time_end
 incr_time_carry_hour:
-                cpi @2, 23
-                brge incr_time_overflow
                 clr @2
+                cpi @3, 23
+                brge incr_time_overflow
                 inc @3
                 jmp incr_time_end
 incr_time_overflow:
