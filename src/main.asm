@@ -4,7 +4,7 @@
 ;               Keypad Sheild
 ;  Author:      Roan Martin-Hayden <roanmh@gmail.com>
 ;  Date:        Dec 2017
-  ;; Note: Much of the ADC Setup Code is based off of work by Mick Walters
+; Note: Much of the ADC Setup Code is based off of work by Mick Walters
 ;-------------------------------------------------------------------------------
 
 
@@ -18,7 +18,7 @@
 
 ;;; Definitions
   ;; Register Definitions
-  .def temp_r16=r16            ; Included in LCD-lib.asm
+  .def temp_r16     =r16            ; Included in LCD-lib.asm
   .def temp_r17     = r17
   .def tnth_sec_reg = r18
   .def sec_reg      = r19
@@ -27,9 +27,15 @@
   .def adc_res      = r22
   .def time_set     = r23
   .def btn_prs      = r24
+  .def sts_reg      = r25
 
 
   ;; Contstant Definitions
+
+  ;; Program Status Register
+  ;; .equ time_set = 0
+  ;; .equ btn_prs  = 1
+  .equ dsp_upd  = 2
 
   ; Output Compare Register
   .equ ocr_low  = $FF
@@ -59,7 +65,7 @@
   .equ di_dis_startup = (1 << ADC0D)
 
   ;; External Interrupt Control Register A
-	.equ ext_int_ctrl_a = (0b11 << ISC00)
+  .equ ext_int_ctrl_a = (0b11 << ISC00)
 
   ;; External Interrupt Mask Register
   .equ ext_int_msk = $00
@@ -105,25 +111,11 @@ hour_str:      .byte 3
 
   ;; Timer Overflow Interupt
   .cseg                         ; This seems needed to avoid errors
-  .include "LCD-lib.asm"
 TIMER1_OVR:     cpi time_set, 0
-                brne TIMER1_OVR_SET
+                brne TIMER1_OVR_END
                 incr_time tnth_sec_reg, sec_reg, min_reg, hour_reg
-TIMER1_OVR_set: hex_to_dec_str_two_dig sec_reg, sec_str ; Convert and store time values
-                hex_to_dec_str_two_dig min_reg, min_str
-                hex_to_dec_str_two_dig hour_reg, hour_str
-
-                ldi temp_r16, $00           ; Set cursor to Begining of first line
-                ori temp_r16, lcd_SetCursor	     ; convert the plain address to a set cursor instruction
-                call lcd_write_instruction_4d
-
-                disp_from_sram hour_str, clk_hr_loc
-                disp_from_pm colon_str, clk_cln1_loc
-                disp_from_sram min_str, clk_mn_loc
-                disp_from_pm colon_str, clk_cln2_loc
-                disp_from_sram sec_str, clk_sc_loc
-TIMER1_OVER_END:
-                reti
+                ori sts_reg, (1 << dsp_upd)
+TIMER1_OVR_END: reti
 
   ;; ADC Conversion Complete Interupt
 ADC_INT:        lds adc_res, ADCH ; Load ADC Result High bit to register
@@ -142,40 +134,41 @@ ADC_B1:         cpi btn_prs, 0
 
                 ldi temp_r16, 1 ; time_set[0]=0->1 or time_set[0]=1->0
                 eor time_set, temp_r16
-				ldi btn_prs, 1
+                ldi btn_prs, 1
                 jmp ADC_UPD_DISP
 
 ADC_B2:         cpi adc_res, 90 ; Button 2 is pressed if  adc_res is higher
                 brlo ADC_B3
                 inc hour_reg
-				cpi hour_reg, 24
-				brlt ADC_B2_1
-				clr hour_reg
+                cpi hour_reg, 24
+                brlt ADC_B2_1
+                clr hour_reg
 ADC_B2_1:       ldi btn_prs, 1
                 jmp ADC_UPD_DISP
 
 ADC_B3:         cpi adc_res, 55 ; Button 3 is pressed if  adc_res is higher
                 brlo ADC_B4
                 inc min_reg
-				cpi min_reg, 60
-				brlt ADC_B3_1
-				clr min_reg
+                cpi min_reg, 60
+                brlt ADC_B3_1
+                clr min_reg
 ADC_B3_1:       ldi btn_prs, 1
                 jmp ADC_UPD_DISP
 
 ADC_B4:         cpi adc_res, 20 ; Button 3 is pressed if  adc_res is higher
                 brlo ADC_B5
                 subi min_reg, -10
-				cpi min_reg, 60
-				brlt ADC_B4_1
-				subi min_reg, 60
+                cpi min_reg, 60
+                brlt ADC_B4_1
+                subi min_reg, 60
 ADC_B4_1:       ldi btn_prs, 1
                 jmp ADC_UPD_DISP
 
 ADC_B5:         cpi sec_reg, 0
+
                 breq ADC_B5_2
-				clr sec_reg
-				jmp ADC_B5_3
+                clr sec_reg
+                jmp ADC_B5_3
 ADC_B5_2:       ldi sec_reg, 30
 ADC_B5_3:       ldi btn_prs, 1
 
@@ -184,6 +177,7 @@ ADC_UPD_DISP:   reti
 
 ;;; Startup Routine
   .cseg
+  	.include "LCD-lib.asm"
 RESET:          init_sp         ; Initialize the Stack Pointer
 
   ;; Timer Setup
@@ -244,13 +238,15 @@ RESET:          init_sp         ; Initialize the Stack Pointer
                 call lcd_write_instruction_4d
 
 
-  ;; Initialize Counters
+  ;; Initialize Registers
                 clr tnth_sec_reg
                 clr sec_reg
                 clr min_reg
                 clr hour_reg
                 clr adc_res
                 clr time_set
+				;clr sts_reg
+				ldi sts_reg, (1 << dsp_upd)
 
   ;; Global Interupt Enable
                 sei
@@ -262,7 +258,28 @@ RESET:          init_sp         ; Initialize the Stack Pointer
                 out PortC,temp_r16 ; set PortC to 0V
 
   ;; Waiting Loop
-wait_loop:      jmp wait_loop
+wait_loop:      mov temp_r16, sts_reg
+                andi temp_r16, (1 << dsp_upd)
+                cpi temp_r16, (1 << dsp_upd)
+                brne wait_loop
+
+                hex_to_dec_str_two_dig sec_reg, sec_str ; Convert and store time values
+                hex_to_dec_str_two_dig min_reg, min_str
+                hex_to_dec_str_two_dig hour_reg, hour_str
+
+                ldi temp_r16, $00           ; Set cursor to Begining of first line
+                ori temp_r16, lcd_SetCursor       ; convert the plain address to a set cursor instruction
+                call lcd_write_instruction_4d
+
+                disp_from_sram hour_str, clk_hr_loc
+                disp_from_pm colon_str, clk_cln1_loc
+                disp_from_sram min_str, clk_mn_loc
+                disp_from_pm colon_str, clk_cln2_loc
+                disp_from_sram sec_str, clk_sc_loc
+                andi sts_reg, $FF - (1 << dsp_upd)
+                ldi temp_r16, 80
+                call delayTx1uS ; Must have an extra delay to avoid display glitches.
+	              jmp wait_loop
 
 ;;; Program Constants
   .cseg

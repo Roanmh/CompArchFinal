@@ -27,13 +27,25 @@
   <FILE>ca_final.lss</FILE>
  </OUTPUT_FILES>
  <LABELS>
-  <ten_sec_str><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>85</LINE></ten_sec_str>
-  <sec_str><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>86</LINE></sec_str>
-  <min_str><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>87</LINE></min_str>
-  <hour_str><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>88</LINE></hour_str>
-  <RESET><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>187</LINE></RESET>
-  <TIMER1_OVR><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>109</LINE></TIMER1_OVR>
-  <ADC_INT><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>129</LINE></ADC_INT>
+  <ten_sec_str><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>91</LINE></ten_sec_str>
+  <sec_str><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>92</LINE></sec_str>
+  <min_str><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>93</LINE></min_str>
+  <hour_str><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>94</LINE></hour_str>
+  <RESET><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>181</LINE></RESET>
+  <TIMER1_OVR><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>114</LINE></TIMER1_OVR>
+  <ADC_INT><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>121</LINE></ADC_INT>
+  <TIMER1_OVR_END><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>118</LINE></TIMER1_OVR_END>
+  <ADC_B1><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>128</LINE></ADC_B1>
+  <ADC_UPD_DISP><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>175</LINE></ADC_UPD_DISP>
+  <ADC_B2><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>140</LINE></ADC_B2>
+  <ADC_B3><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>149</LINE></ADC_B3>
+  <ADC_B2_1><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>146</LINE></ADC_B2_1>
+  <ADC_B4><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>158</LINE></ADC_B4>
+  <ADC_B3_1><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>155</LINE></ADC_B3_1>
+  <ADC_B5><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>167</LINE></ADC_B5>
+  <ADC_B4_1><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>164</LINE></ADC_B4_1>
+  <ADC_B5_2><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>172</LINE></ADC_B5_2>
+  <ADC_B5_3><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>173</LINE></ADC_B5_3>
   <lcd_init_4d><FILE>..\include\LCD-lib.asm</FILE><LINE>130</LINE></lcd_init_4d>
   <delayTx1mS><FILE>..\include\LCD-lib.asm</FILE><LINE>372</LINE></delayTx1mS>
   <lcd_write_4><FILE>..\include\LCD-lib.asm</FILE><LINE>317</LINE></lcd_write_4>
@@ -47,22 +59,9 @@
   <delayYx1mS><FILE>..\include\LCD-lib.asm</FILE><LINE>356</LINE></delayYx1mS>
   <delay1mS><FILE>..\include\LCD-lib.asm</FILE><LINE>387</LINE></delay1mS>
   <delay1mS_01><FILE>..\include\LCD-lib.asm</FILE><LINE>393</LINE></delay1mS_01>
-  <TIMER1_OVR_SET><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>112</LINE></TIMER1_OVR_SET>
+  <wait_loop><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>261</LINE></wait_loop>
   <lcd_write_string_4d_mem><FILE>..\include\timer_fxns.inc</FILE><LINE>17</LINE></lcd_write_string_4d_mem>
-  <colon_str><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>270</LINE></colon_str>
-  <TIMER1_OVER_END><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>125</LINE></TIMER1_OVER_END>
-  <ADC_B1><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>136</LINE></ADC_B1>
-  <ADC_UPD_DISP><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>182</LINE></ADC_UPD_DISP>
-  <ADC_B2><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>148</LINE></ADC_B2>
-  <ADC_B3><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>157</LINE></ADC_B3>
-  <ADC_B2_1><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>154</LINE></ADC_B2_1>
-  <ADC_B4><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>166</LINE></ADC_B4>
-  <ADC_B3_1><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>163</LINE></ADC_B3_1>
-  <ADC_B5><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>175</LINE></ADC_B5>
-  <ADC_B4_1><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>172</LINE></ADC_B4_1>
-  <ADC_B5_2><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>179</LINE></ADC_B5_2>
-  <ADC_B5_3><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>180</LINE></ADC_B5_3>
-  <wait_loop><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>266</LINE></wait_loop>
+  <colon_str><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>284</LINE></colon_str>
   <lcd_append_string_4d_mem><FILE>..\include\timer_fxns.inc</FILE><LINE>37</LINE></lcd_append_string_4d_mem>
   <lcd_write_string_4d_mem_01><FILE>..\include\timer_fxns.inc</FILE><LINE>43</LINE></lcd_write_string_4d_mem_01>
   <lcd_write_string_4d_mem_02><FILE>..\include\timer_fxns.inc</FILE><LINE>55</LINE></lcd_write_string_4d_mem_02>
