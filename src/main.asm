@@ -4,7 +4,7 @@
 ;               Keypad Sheild
 ;  Author:      Roan Martin-Hayden <roanmh@gmail.com>
 ;  Date:        Dec 2017
-; Note: Much of the ADC Setup Code is based off of work by Mick Walters
+;  Note: Much of the ADC Setup Code is based off of work by Mick Walters
 ;-------------------------------------------------------------------------------
 
 
@@ -25,15 +25,14 @@
   .def min_reg      = r20
   .def hour_reg     = r21
   .def adc_res      = r22
-  .def time_set     = r23
-  .def btn_prs      = r24
-  .def sts_reg      = r25
+  .def btn_prs      = r23
+  .def sts_reg      = r24
 
 
   ;; Contstant Definitions
 
   ;; Program Status Register
-  ;; .equ time_set = 0
+  .equ time_set = 0
   ;; .equ btn_prs  = 1
   .equ dsp_upd  = 2
 
@@ -42,8 +41,6 @@
   .equ ocr_high = $5F
 
   ; 16bit Timer Waveform Generation Mode
-  ;.equ t16wgm_hi = (0b00 << WGM12)   ; Normal Mode
-  ;.equ t16wgm_lo = (0b00 << WGM10)
   .equ t16wgm_hi = (0b01 << WGM12)   ; CTC Mode
   .equ t16wgm_lo = (0b00 << WGM10)
 
@@ -99,8 +96,6 @@ hour_str:      .byte 3
                 jmp RESET        ; Reset Interupt Vecotor
   .org 0x0016
                 jmp TIMER1_OVR   ; Timer Output Compare Interupt
-  .org 0x001A
-                jmp TIMER1_OVR   ; Timer Overflow Interupt Vector
   .org 0x002A
                 jmp ADC_INT      ; ADC Conversion Complete Interrupt
 
@@ -111,7 +106,7 @@ hour_str:      .byte 3
 
   ;; Timer Overflow Interupt
   .cseg                         ; This seems needed to avoid errors
-TIMER1_OVR:     cpi time_set, 0
+TIMER1_OVR:     cpbit temp_r16, sts_reg, time_set, 0
                 brne TIMER1_OVR_END
                 incr_time tnth_sec_reg, sec_reg, min_reg, hour_reg
                 ori sts_reg, (1 << dsp_upd)
@@ -132,8 +127,8 @@ ADC_B1:         cpi btn_prs, 0
                 cpi adc_res, 140 ; Button 1 is pressed if  adc_res is higher
                 brlo ADC_B2
 
-                ldi temp_r16, 1 ; time_set[0]=0->1 or time_set[0]=1->0
-                eor time_set, temp_r16
+                ldi temp_r16, (1 << time_set) ; time_set[0]=0->1 or time_set[0]=1->0
+                eor sts_reg, temp_r16
                 ldi btn_prs, 1
                 jmp ADC_UPD_DISP
 
@@ -177,7 +172,7 @@ ADC_UPD_DISP:   reti
 
 ;;; Startup Routine
   .cseg
-  	.include "LCD-lib.asm"
+  .include "LCD-lib.asm"
 RESET:          init_sp         ; Initialize the Stack Pointer
 
   ;; Timer Setup
@@ -244,9 +239,8 @@ RESET:          init_sp         ; Initialize the Stack Pointer
                 clr min_reg
                 clr hour_reg
                 clr adc_res
-                clr time_set
-				;clr sts_reg
-				ldi sts_reg, (1 << dsp_upd)
+                ;clr sts_reg
+                ldi sts_reg, (1 << dsp_upd)
 
   ;; Global Interupt Enable
                 sei
@@ -258,9 +252,7 @@ RESET:          init_sp         ; Initialize the Stack Pointer
                 out PortC,temp_r16 ; set PortC to 0V
 
   ;; Waiting Loop
-wait_loop:      mov temp_r16, sts_reg
-                andi temp_r16, (1 << dsp_upd)
-                cpi temp_r16, (1 << dsp_upd)
+wait_loop:      cpbit temp_r16, sts_reg, dsp_upd, 1
                 brne wait_loop
 
                 hex_to_dec_str_two_dig sec_reg, sec_str ; Convert and store time values
@@ -279,7 +271,7 @@ wait_loop:      mov temp_r16, sts_reg
                 andi sts_reg, $FF - (1 << dsp_upd)
                 ldi temp_r16, 80
                 call delayTx1uS ; Must have an extra delay to avoid display glitches.
-	              jmp wait_loop
+                jmp wait_loop
 
 ;;; Program Constants
   .cseg

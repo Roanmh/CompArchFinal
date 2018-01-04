@@ -1,5 +1,5 @@
 
-AVRA   Ver. 1.3.0 src/main.asm Wed Jan 03 18:10:08 2018
+AVRA   Ver. 1.3.0 src/main.asm Thu Jan 04 14:33:07 2018
 
 
          ;- main.asm --------------------------------------------------------------------
@@ -222,6 +222,17 @@ AVRA   Ver. 1.3.0 src/main.asm Wed Jan 03 18:10:08 2018
           	              ldi @0H, high(@1)
             .endmacro
          
+         ;----------------------------------------------------------------------------
+         ; Name:     load_addr
+         ; Purpose:  Load an adress into a lettered register.
+         ; Args:     0 - Register to load the address into
+         ;           1 - Address to load
+            .macro cpbit
+                          mov @0, @1
+                          andi @0, (1 << @2)
+                          cpi @0, (@3 << @2)
+            .endmacro
+         
          
          ;;; Definitions
            ;; Register Definitions
@@ -232,15 +243,14 @@ AVRA   Ver. 1.3.0 src/main.asm Wed Jan 03 18:10:08 2018
             .def min_reg      = r20
             .def hour_reg     = r21
             .def adc_res      = r22
-            .def time_set     = r23
-            .def btn_prs      = r24
-            .def sts_reg      = r25
+            .def btn_prs      = r23
+            .def sts_reg      = r24
          
          
            ;; Contstant Definitions
          
            ;; Program Status Register
-           ;; .equ time_set = 0
+            .equ time_set = 0
            ;; .equ btn_prs  = 1
             .equ dsp_upd  = 2
          
@@ -303,13 +313,13 @@ D:000109    hour_str:      .byte 3
          ;;; Interupt Vectors
             .cseg
             .org 0x0000
-C:000000 940c 011e                 jmp RESET        ; Reset Interupt Vecotor
+C:000000 940c 0120                 jmp RESET        ; Reset Interupt Vecotor
             .org 0x0016
 C:000016 940c 0034                 jmp TIMER1_OVR   ; Timer Output Compare Interupt
             .org 0x001A
 C:00001a 940c 0034                 jmp TIMER1_OVR   ; Timer Overflow Interupt Vector
             .org 0x002A
-C:00002a 940c 0050                 jmp ADC_INT      ; ADC Conversion Complete Interrupt
+C:00002a 940c 0052                 jmp ADC_INT      ; ADC Conversion Complete Interrupt
          
          
          
@@ -318,95 +328,98 @@ C:00002a 940c 0050                 jmp ADC_INT      ; ADC Conversion Complete In
          
            ;; Timer Overflow Interupt
             .cseg                         ; This seems needed to avoid errors
-C:000034 3070      TIMER1_OVR:     cpi time_set, 0
-C:000035 f4c9                      brne TIMER1_OVR_END
-C:000036   +                  incr_time tnth_sec_reg, sec_reg, min_reg, hour_reg
+C:000034   +  TIMER1_OVR:     cpbit temp_r16, sts_reg, time_set, 0
+C:000034 2f08      mov temp_r16, sts_reg
+C:000035 7001      andi temp_r16, (1 << time_set)
+C:000036 3000      cpi temp_r16, (0 << time_set)
+C:000037 f4c9                      brne TIMER1_OVR_END
+C:000038   +                  incr_time tnth_sec_reg, sec_reg, min_reg, hour_reg
          
 
-C:000036 3029      cpi tnth_sec_reg, 9
-C:000037 f41c      brge incr_time_carry_sec
-C:000038 9523      inc tnth_sec_reg
-C:000039 940c 004e jmp incr_time_end
+C:000038 3029      cpi tnth_sec_reg, 9
+C:000039 f41c      brge incr_time_carry_sec
+C:00003a 9523      inc tnth_sec_reg
+C:00003b 940c 0050 jmp incr_time_end
           incr_time_carry_sec:
-C:00003b 2722      clr tnth_sec_reg
-C:00003c 333b      cpi sec_reg, 59
-C:00003d f41c      brge incr_time_carry_min
-C:00003e 9533      inc sec_reg
-C:00003f 940c 004e jmp incr_time_end
+C:00003d 2722      clr tnth_sec_reg
+C:00003e 333b      cpi sec_reg, 59
+C:00003f f41c      brge incr_time_carry_min
+C:000040 9533      inc sec_reg
+C:000041 940c 0050 jmp incr_time_end
           incr_time_carry_min:
-C:000041 2733      clr sec_reg
-C:000042 334b      cpi min_reg, 59
-C:000043 f41c      brge incr_time_carry_hour
-C:000044 9543      inc min_reg
-C:000045 940c 004e jmp incr_time_end
+C:000043 2733      clr sec_reg
+C:000044 334b      cpi min_reg, 59
+C:000045 f41c      brge incr_time_carry_hour
+C:000046 9543      inc min_reg
+C:000047 940c 0050 jmp incr_time_end
           incr_time_carry_hour:
-C:000047 2744      clr min_reg
-C:000048 3157      cpi hour_reg, 23
-C:000049 f41c      brge incr_time_overflow
-C:00004a 9553      inc hour_reg
-C:00004b 940c 004e jmp incr_time_end
+C:000049 2744      clr min_reg
+C:00004a 3157      cpi hour_reg, 23
+C:00004b f41c      brge incr_time_overflow
+C:00004c 9553      inc hour_reg
+C:00004d 940c 0050 jmp incr_time_end
           incr_time_overflow:
-C:00004d 2755      clr hour_reg
+C:00004f 2755      clr hour_reg
           incr_time_end:
-C:00004e 6094                      ori sts_reg, (1 << dsp_upd)
-C:00004f 9518      TIMER1_OVR_END: reti
+C:000050 6084                      ori sts_reg, (1 << dsp_upd)
+C:000051 9518      TIMER1_OVR_END: reti
          
            ;; ADC Conversion Complete Interupt
-C:000050 9160 0079 ADC_INT:        lds adc_res, ADCH ; Load ADC Result High bit to register
+C:000052 9160 0079 ADC_INT:        lds adc_res, ADCH ; Load ADC Result High bit to register
          
-C:000052 3f60                      cpi adc_res, 240 ; No button is pressed if adc_res is higher
-C:000053 f010                      brlo ADC_B1
-C:000054 2788                      clr btn_prs
-C:000055 9518                      reti            ; Take no action
+C:000054 3f60                      cpi adc_res, 240 ; No button is pressed if adc_res is higher
+C:000055 f010                      brlo ADC_B1
+C:000056 2777                      clr btn_prs
+C:000057 9518                      reti            ; Take no action
          
-C:000056 3080      ADC_B1:         cpi btn_prs, 0
-C:000057 f551                      brne ADC_UPD_DISP
-C:000058 9478                      sei              ; Enable interupts because this is lower
+C:000058 3070      ADC_B1:         cpi btn_prs, 0
+C:000059 f551                      brne ADC_UPD_DISP
+C:00005a 9478                      sei              ; Enable interupts because this is lower
                                           ; priority than time keeping
-C:000059 386c                      cpi adc_res, 140 ; Button 1 is pressed if  adc_res is higher
-C:00005a f028                      brlo ADC_B2
+C:00005b 386c                      cpi adc_res, 140 ; Button 1 is pressed if  adc_res is higher
+C:00005c f028                      brlo ADC_B2
          
-C:00005b e001                      ldi temp_r16, 1 ; time_set[0]=0->1 or time_set[0]=1->0
-C:00005c 2770                      eor time_set, temp_r16
-C:00005d e081                      ldi btn_prs, 1
-C:00005e 940c 0082                 jmp ADC_UPD_DISP
+C:00005d e001                      ldi temp_r16, (1 << time_set) ; time_set[0]=0->1 or time_set[0]=1->0
+C:00005e 2780                      eor sts_reg, temp_r16
+C:00005f e071                      ldi btn_prs, 1
+C:000060 940c 0084                 jmp ADC_UPD_DISP
          
-C:000060 356a      ADC_B2:         cpi adc_res, 90 ; Button 2 is pressed if  adc_res is higher
-C:000061 f038                      brlo ADC_B3
-C:000062 9553                      inc hour_reg
-C:000063 3158                      cpi hour_reg, 24
-C:000064 f00c                      brlt ADC_B2_1
-C:000065 2755                      clr hour_reg
-C:000066 e081      ADC_B2_1:       ldi btn_prs, 1
-C:000067 940c 0082                 jmp ADC_UPD_DISP
+C:000062 356a      ADC_B2:         cpi adc_res, 90 ; Button 2 is pressed if  adc_res is higher
+C:000063 f038                      brlo ADC_B3
+C:000064 9553                      inc hour_reg
+C:000065 3158                      cpi hour_reg, 24
+C:000066 f00c                      brlt ADC_B2_1
+C:000067 2755                      clr hour_reg
+C:000068 e071      ADC_B2_1:       ldi btn_prs, 1
+C:000069 940c 0084                 jmp ADC_UPD_DISP
          
-C:000069 3367      ADC_B3:         cpi adc_res, 55 ; Button 3 is pressed if  adc_res is higher
-C:00006a f038                      brlo ADC_B4
-C:00006b 9543                      inc min_reg
-C:00006c 334c                      cpi min_reg, 60
-C:00006d f00c                      brlt ADC_B3_1
-C:00006e 2744                      clr min_reg
-C:00006f e081      ADC_B3_1:       ldi btn_prs, 1
-C:000070 940c 0082                 jmp ADC_UPD_DISP
+C:00006b 3367      ADC_B3:         cpi adc_res, 55 ; Button 3 is pressed if  adc_res is higher
+C:00006c f038                      brlo ADC_B4
+C:00006d 9543                      inc min_reg
+C:00006e 334c                      cpi min_reg, 60
+C:00006f f00c                      brlt ADC_B3_1
+C:000070 2744                      clr min_reg
+C:000071 e071      ADC_B3_1:       ldi btn_prs, 1
+C:000072 940c 0084                 jmp ADC_UPD_DISP
          
-C:000072 3164      ADC_B4:         cpi adc_res, 20 ; Button 3 is pressed if  adc_res is higher
-C:000073 f038                      brlo ADC_B5
-C:000074 5f46                      subi min_reg, -10
-C:000075 334c                      cpi min_reg, 60
-C:000076 f00c                      brlt ADC_B4_1
-C:000077 534c                      subi min_reg, 60
-C:000078 e081      ADC_B4_1:       ldi btn_prs, 1
-C:000079 940c 0082                 jmp ADC_UPD_DISP
+C:000074 3164      ADC_B4:         cpi adc_res, 20 ; Button 3 is pressed if  adc_res is higher
+C:000075 f038                      brlo ADC_B5
+C:000076 5f46                      subi min_reg, -10
+C:000077 334c                      cpi min_reg, 60
+C:000078 f00c                      brlt ADC_B4_1
+C:000079 534c                      subi min_reg, 60
+C:00007a e071      ADC_B4_1:       ldi btn_prs, 1
+C:00007b 940c 0084                 jmp ADC_UPD_DISP
          
-C:00007b 3030      ADC_B5:         cpi sec_reg, 0
+C:00007d 3030      ADC_B5:         cpi sec_reg, 0
          
-C:00007c f019                      breq ADC_B5_2
-C:00007d 2733                      clr sec_reg
-C:00007e 940c 0081                 jmp ADC_B5_3
-C:000080 e13e      ADC_B5_2:       ldi sec_reg, 30
-C:000081 e081      ADC_B5_3:       ldi btn_prs, 1
+C:00007e f019                      breq ADC_B5_2
+C:00007f 2733                      clr sec_reg
+C:000080 940c 0083                 jmp ADC_B5_3
+C:000082 e13e      ADC_B5_2:       ldi sec_reg, 30
+C:000083 e071      ADC_B5_3:       ldi btn_prs, 1
          
-C:000082 9518      ADC_UPD_DISP:   reti
+C:000084 9518      ADC_UPD_DISP:   reti
          
          
          ;;; Startup Routine
@@ -543,8 +556,8 @@ C:000082 9518      ADC_UPD_DISP:   reti
          
           lcd_init_4d:
          ; Power-up delay
-C:000083 e604          ldi     temp_r16, 100                       ; initial 40 mSec delay
-C:000084 940e 0106     call    delayTx1mS
+C:000085 e604          ldi     temp_r16, 100                       ; initial 40 mSec delay
+C:000086 940e 0108     call    delayTx1mS
          
          ; IMPORTANT - At this point the LCD module is in the 8-bit mode and it is expecting to receive  
          ;    8 bits of data, one bit on each of its 8 data lines, each time the 'E' line is pulsed.
@@ -560,81 +573,81 @@ C:000084 940e 0106     call    delayTx1mS
          ;    control lines have previously been configured properly.
          
          ; configure the microprocessor pins for the data lines
-C:000086 9a57          sbi     lcd_D7_ddr, lcd_D7_bit          ; 4 data lines - output
-C:000087 9a56          sbi     lcd_D6_ddr, lcd_D6_bit
-C:000088 9a55          sbi     lcd_D5_ddr, lcd_D5_bit
-C:000089 9a54          sbi     lcd_D4_ddr, lcd_D4_bit
+C:000088 9a57          sbi     lcd_D7_ddr, lcd_D7_bit          ; 4 data lines - output
+C:000089 9a56          sbi     lcd_D6_ddr, lcd_D6_bit
+C:00008a 9a55          sbi     lcd_D5_ddr, lcd_D5_bit
+C:00008b 9a54          sbi     lcd_D4_ddr, lcd_D4_bit
          
          ; configure the microprocessor pins for the control lines
-C:00008a 9a21          sbi     lcd_E_ddr,  lcd_E_bit           ; E line - output
-C:00008b 9a20          sbi     lcd_RS_ddr, lcd_RS_bit          ; RS line - output
+C:00008c 9a21          sbi     lcd_E_ddr,  lcd_E_bit           ; E line - output
+C:00008d 9a20          sbi     lcd_RS_ddr, lcd_RS_bit          ; RS line - output
          
          ; Set up the RS and E lines for the 'lcd_write_4' subroutine.
-C:00008c 9828          cbi     lcd_RS_port, lcd_RS_bit         ; select the Instruction Register (RS low)
-C:00008d 9829          cbi     lcd_E_port, lcd_E_bit           ; make sure E is initially low
+C:00008e 9828          cbi     lcd_RS_port, lcd_RS_bit         ; select the Instruction Register (RS low)
+C:00008f 9829          cbi     lcd_E_port, lcd_E_bit           ; make sure E is initially low
          
          ; Reset the LCD controller.
-C:00008e e300          ldi     temp_r16, lcd_FunctionReset         ; first part of reset sequence
-C:00008f 940e 00ee     call    lcd_write_4
-C:000091 e00a          ldi     temp_r16, 10                        ; 4.1 mS delay (min)
-C:000092 940e 0106     call    delayTx1mS
+C:000090 e300          ldi     temp_r16, lcd_FunctionReset         ; first part of reset sequence
+C:000091 940e 00f0     call    lcd_write_4
+C:000093 e00a          ldi     temp_r16, 10                        ; 4.1 mS delay (min)
+C:000094 940e 0108     call    delayTx1mS
          
-C:000094 e300          ldi     temp_r16, lcd_FunctionReset         ; second part of reset sequence
-C:000095 940e 00ee     call    lcd_write_4
-C:000097 ec08          ldi     temp_r16, 200                       ; 100 uS delay (min)
-C:000098 940e 0114     call    delayTx1uS
+C:000096 e300          ldi     temp_r16, lcd_FunctionReset         ; second part of reset sequence
+C:000097 940e 00f0     call    lcd_write_4
+C:000099 ec08          ldi     temp_r16, 200                       ; 100 uS delay (min)
+C:00009a 940e 0116     call    delayTx1uS
          
-C:00009a e300          ldi     temp_r16, lcd_FunctionReset         ; third part of reset sequence
-C:00009b 940e 00ee     call    lcd_write_4
-C:00009d ec08          ldi     temp_r16, 200                       ; this delay is omitted in the data sheet
-C:00009e 940e 0114     call    delayTx1uS
+C:00009c e300          ldi     temp_r16, lcd_FunctionReset         ; third part of reset sequence
+C:00009d 940e 00f0     call    lcd_write_4
+C:00009f ec08          ldi     temp_r16, 200                       ; this delay is omitted in the data sheet
+C:0000a0 940e 0116     call    delayTx1uS
          
          ; Preliminary Function Set instruction - used only to set the 4-bit mode.
          ; The number of lines or the font cannot be set at this time since the controller is still in the 
          ;   8-bit mode, but the data transfer mode can be changed since this parameter is determined by one 
          ;   of the upper four bits of the instruction.
-C:0000a0 e208          ldi     temp_r16, lcd_FunctionSet4bit       ; set 4-bit mode
-C:0000a1 940e 00ee     call    lcd_write_4
-C:0000a3 e500          ldi     temp_r16, 80                        ; 40 uS delay (min)
-C:0000a4 940e 0114     call    delayTx1uS
+C:0000a2 e208          ldi     temp_r16, lcd_FunctionSet4bit       ; set 4-bit mode
+C:0000a3 940e 00f0     call    lcd_write_4
+C:0000a5 e500          ldi     temp_r16, 80                        ; 40 uS delay (min)
+C:0000a6 940e 0116     call    delayTx1uS
          
          ; Function Set instruction
-C:0000a6 e208          ldi     temp_r16, lcd_FunctionSet4bit       ; set mode, lines, and font
-C:0000a7 940e 00e3     call    lcd_write_instruction_4d
-C:0000a9 e500          ldi     temp_r16, 80                        ; 40 uS delay (min)
-C:0000aa 940e 0114     call    delayTx1uS
+C:0000a8 e208          ldi     temp_r16, lcd_FunctionSet4bit       ; set mode, lines, and font
+C:0000a9 940e 00e5     call    lcd_write_instruction_4d
+C:0000ab e500          ldi     temp_r16, 80                        ; 40 uS delay (min)
+C:0000ac 940e 0116     call    delayTx1uS
          
          ; The next three instructions are specified in the data sheet as part of the initialization routine,
          ;   so it is a good idea (but probably not necessary) to do them just as specified and then redo them
          ;   later if the application requires a different configuration.
          
          ; Display On/Off Control instruction
-C:0000ac e008          ldi     temp_r16, lcd_DisplayOff            ; turn display OFF
-C:0000ad 940e 00e3     call    lcd_write_instruction_4d
-C:0000af e500          ldi     temp_r16, 80                        ; 40 uS delay (min)
-C:0000b0 940e 0114     call    delayTx1uS
+C:0000ae e008          ldi     temp_r16, lcd_DisplayOff            ; turn display OFF
+C:0000af 940e 00e5     call    lcd_write_instruction_4d
+C:0000b1 e500          ldi     temp_r16, 80                        ; 40 uS delay (min)
+C:0000b2 940e 0116     call    delayTx1uS
          
          ; Clear Display instruction
-C:0000b2 e001          ldi     temp_r16, lcd_Clear                 ; clear display RAM
-C:0000b3 940e 00e3     call    lcd_write_instruction_4d
-C:0000b5 e004          ldi     temp_r16, 4                         ; 1.64 mS delay (min)
-C:0000b6 940e 0106     call    delayTx1mS
+C:0000b4 e001          ldi     temp_r16, lcd_Clear                 ; clear display RAM
+C:0000b5 940e 00e5     call    lcd_write_instruction_4d
+C:0000b7 e004          ldi     temp_r16, 4                         ; 1.64 mS delay (min)
+C:0000b8 940e 0108     call    delayTx1mS
          
          ; Entry Mode Set instruction
-C:0000b8 e006          ldi     temp_r16, lcd_EntryMode             ; set desired shift characteristics
-C:0000b9 940e 00e3     call    lcd_write_instruction_4d
-C:0000bb e500          ldi     temp_r16, 80                        ; 40 uS delay (min)
-C:0000bc 940e 0114     call    delayTx1uS
+C:0000ba e006          ldi     temp_r16, lcd_EntryMode             ; set desired shift characteristics
+C:0000bb 940e 00e5     call    lcd_write_instruction_4d
+C:0000bd e500          ldi     temp_r16, 80                        ; 40 uS delay (min)
+C:0000be 940e 0116     call    delayTx1uS
          
          ; This is the end of the LCD controller initialization as specified in the data sheet, but the display
          ;   has been left in the OFF condition.  This is a good time to turn the display back ON.
          
          ; Display On/Off Control instruction
-C:0000be e00c          ldi     temp_r16, lcd_DisplayOn             ; turn the display ON
-C:0000bf 940e 00e3     call    lcd_write_instruction_4d
-C:0000c1 e500          ldi     temp_r16, 80                        ; 40 uS delay (min)
-C:0000c2 940e 0114     call    delayTx1uS
-C:0000c4 9508          ret
+C:0000c0 e00c          ldi     temp_r16, lcd_DisplayOn             ; turn the display ON
+C:0000c1 940e 00e5     call    lcd_write_instruction_4d
+C:0000c3 e500          ldi     temp_r16, 80                        ; 40 uS delay (min)
+C:0000c4 940e 0116     call    delayTx1uS
+C:0000c6 9508          ret
          
          
          
@@ -655,36 +668,36 @@ C:0000c4 9508          ret
          
           lcd_write_string_4d:
          ; preserve registers
-C:0000c5 93ff          push    ZH                              ; preserve pointer registers
-C:0000c6 93ef          push    ZL
+C:0000c7 93ff          push    ZH                              ; preserve pointer registers
+C:0000c8 93ef          push    ZL
          
          ; fix up the pointers for use with the 'lpm' instruction
-C:0000c7 0fee          lsl     ZL                              ; shift the pointer one bit left for the lpm instruction
-C:0000c8 1fff          rol     ZH
+C:0000c9 0fee          lsl     ZL                              ; shift the pointer one bit left for the lpm instruction
+C:0000ca 1fff          rol     ZH
          
          ; set up the initial DDRAM address
-C:0000c9 6800          ori     temp_r16, lcd_SetCursor     ; convert the plain address to a set cursor instruction
-C:0000ca 940e 00e3     call   lcd_write_instruction_4d     ; set up the first DDRAM address
-C:0000cc e500          ldi     temp_r16, 80                ; 40 uS delay (min)
-C:0000cd 940e 0114     call    delayTx1uS
+C:0000cb 6800          ori     temp_r16, lcd_SetCursor     ; convert the plain address to a set cursor instruction
+C:0000cc 940e 00e5     call   lcd_write_instruction_4d     ; set up the first DDRAM address
+C:0000ce e500          ldi     temp_r16, 80                ; 40 uS delay (min)
+C:0000cf 940e 0116     call    delayTx1uS
          
          ; write the string of characters
           lcd_write_string_4d_01:
-C:0000cf 9105          lpm     temp_r16, Z+                        ; get a character
-C:0000d0 3000          cpi     temp_r16,  0                        ; check for end of string
-C:0000d1 f031          breq    lcd_write_string_4d_02          ; done
+C:0000d1 9105          lpm     temp_r16, Z+                        ; get a character
+C:0000d2 3000          cpi     temp_r16,  0                        ; check for end of string
+C:0000d3 f031          breq    lcd_write_string_4d_02          ; done
          
          ; arrive here if this is a valid character
-C:0000d2 940e 00db     call    lcd_write_character_4d          ; display the character
-C:0000d4 e500          ldi     temp_r16, 80                        ; 40 uS delay (min)
-C:0000d5 940e 0114     call    delayTx1uS
-C:0000d7 cff7          rjmp    lcd_write_string_4d_01          ; not done, send another character
+C:0000d4 940e 00dd     call    lcd_write_character_4d          ; display the character
+C:0000d6 e500          ldi     temp_r16, 80                        ; 40 uS delay (min)
+C:0000d7 940e 0116     call    delayTx1uS
+C:0000d9 cff7          rjmp    lcd_write_string_4d_01          ; not done, send another character
          
          ; arrive here when all characters in the message have been sent to the LCD module
           lcd_write_string_4d_02:
-C:0000d8 91ef          pop     ZL                              ; restore pointer registers
-C:0000d9 91ff          pop     ZH
-C:0000da 9508          ret
+C:0000da 91ef          pop     ZL                              ; restore pointer registers
+C:0000db 91ff          pop     ZH
+C:0000dc 9508          ret
          
          ; ---------------------------------------------------------------------------
          ; Name:     lcd_write_character_4d
@@ -694,12 +707,12 @@ C:0000da 9508          ret
          ; Notes:    does not deal with RW (busy flag is not implemented)
          
           lcd_write_character_4d:
-C:0000db 9a28          sbi     lcd_RS_port, lcd_RS_bit         ; select the Data Register (RS high)
-C:0000dc 9829          cbi     lcd_E_port, lcd_E_bit           ; make sure E is initially low
-C:0000dd 940e 00ee     call    lcd_write_4                     ; write the upper 4-bits of the data
-C:0000df 9502          swap    temp_r16                        ; swap high and low nibbles
-C:0000e0 940e 00ee     call    lcd_write_4                     ; write the lower 4-bits of the data
-C:0000e2 9508          ret
+C:0000dd 9a28          sbi     lcd_RS_port, lcd_RS_bit         ; select the Data Register (RS high)
+C:0000de 9829          cbi     lcd_E_port, lcd_E_bit           ; make sure E is initially low
+C:0000df 940e 00f0     call    lcd_write_4                     ; write the upper 4-bits of the data
+C:0000e1 9502          swap    temp_r16                        ; swap high and low nibbles
+C:0000e2 940e 00f0     call    lcd_write_4                     ; write the lower 4-bits of the data
+C:0000e4 9508          ret
          
          ; ---------------------------------------------------------------------------
          ; Name:     lcd_write_instruction_4d
@@ -709,14 +722,14 @@ C:0000e2 9508          ret
          ; Notes:    does not deal with RW (busy flag is not implemented)
          
           lcd_write_instruction_4d:
-C:0000e3 9828          cbi     lcd_RS_port, lcd_RS_bit ; select the Instruction Register (RS low)
-C:0000e4 9829          cbi     lcd_E_port, lcd_E_bit   ; make sure E is initially low
-C:0000e5 940e 00ee     call    lcd_write_4             ; write the upper 4-bits of the instruction
-C:0000e7 9502          swap    temp_r16                ; swap high and low nibbles
-C:0000e8 940e 00ee     call    lcd_write_4             ; write the lower 4-bits of the instruction
-C:0000ea e004          ldi     temp_r16, 4                  ; 1.64 mS delay (min)
-C:0000eb 940e 0106     call    delayTx1mS              ;
-C:0000ed 9508          ret
+C:0000e5 9828          cbi     lcd_RS_port, lcd_RS_bit ; select the Instruction Register (RS low)
+C:0000e6 9829          cbi     lcd_E_port, lcd_E_bit   ; make sure E is initially low
+C:0000e7 940e 00f0     call    lcd_write_4             ; write the upper 4-bits of the instruction
+C:0000e9 9502          swap    temp_r16                ; swap high and low nibbles
+C:0000ea 940e 00f0     call    lcd_write_4             ; write the lower 4-bits of the instruction
+C:0000ec e004          ldi     temp_r16, 4                  ; 1.64 mS delay (min)
+C:0000ed 940e 0108     call    delayTx1mS              ;
+C:0000ef 9508          ret
          
          ; ---------------------------------------------------------------------------
          ; Name:     lcd_write_4
@@ -730,32 +743,32 @@ C:0000ed 9508          ret
          
           lcd_write_4:
          ; set up D7
-C:0000ee 9a5f          sbi     lcd_D7_port, lcd_D7_bit         ; assume that the D7 data is '1'
-C:0000ef ff07          sbrs    temp_r16, 7                         ; check the actual data value
-C:0000f0 985f          cbi     lcd_D7_port, lcd_D7_bit         ; arrive here only if the data was actually '0'
+C:0000f0 9a5f          sbi     lcd_D7_port, lcd_D7_bit         ; assume that the D7 data is '1'
+C:0000f1 ff07          sbrs    temp_r16, 7                         ; check the actual data value
+C:0000f2 985f          cbi     lcd_D7_port, lcd_D7_bit         ; arrive here only if the data was actually '0'
          
          ; set up D6
-C:0000f1 9a5e          sbi     lcd_D6_port, lcd_D6_bit         ; repeat for each data bit
-C:0000f2 ff06          sbrs    temp_r16, 6
-C:0000f3 985e          cbi     lcd_D6_port, lcd_D6_bit
+C:0000f3 9a5e          sbi     lcd_D6_port, lcd_D6_bit         ; repeat for each data bit
+C:0000f4 ff06          sbrs    temp_r16, 6
+C:0000f5 985e          cbi     lcd_D6_port, lcd_D6_bit
          
          ; set up D5
-C:0000f4 9a5d          sbi     lcd_D5_port, lcd_D5_bit
-C:0000f5 ff05          sbrs    temp_r16, 5
-C:0000f6 985d          cbi     lcd_D5_port, lcd_D5_bit
+C:0000f6 9a5d          sbi     lcd_D5_port, lcd_D5_bit
+C:0000f7 ff05          sbrs    temp_r16, 5
+C:0000f8 985d          cbi     lcd_D5_port, lcd_D5_bit
          
          ; set up D4
-C:0000f7 9a5c          sbi     lcd_D4_port, lcd_D4_bit
-C:0000f8 ff04          sbrs    temp_r16, 4 
-C:0000f9 985c          cbi     lcd_D4_port, lcd_D4_bit
+C:0000f9 9a5c          sbi     lcd_D4_port, lcd_D4_bit
+C:0000fa ff04          sbrs    temp_r16, 4 
+C:0000fb 985c          cbi     lcd_D4_port, lcd_D4_bit
          
          ; write the data
                                                      ; 'Address set-up time' (40 nS)
-C:0000fa 9a29          sbi     lcd_E_port, lcd_E_bit           ; Enable pin high
-C:0000fb 940e 0119     call    delay1uS                        ; implement 'Data set-up time' (80 nS) and 'Enable pulse width' (230 nS)
-C:0000fd 9829          cbi     lcd_E_port, lcd_E_bit           ; Enable pin low
-C:0000fe 940e 0119     call    delay1uS                        ; implement 'Data hold time' (10 nS) and 'Enable cycle time' (500 nS)
-C:000100 9508          ret
+C:0000fc 9a29          sbi     lcd_E_port, lcd_E_bit           ; Enable pin high
+C:0000fd 940e 011b     call    delay1uS                        ; implement 'Data set-up time' (80 nS) and 'Enable pulse width' (230 nS)
+C:0000ff 9829          cbi     lcd_E_port, lcd_E_bit           ; Enable pin low
+C:000100 940e 011b     call    delay1uS                        ; implement 'Data hold time' (10 nS) and 'Enable cycle time' (500 nS)
+C:000102 9508          ret
          
          ; ============================== End of 4-bit LCD Subroutines ===============
          
@@ -768,12 +781,12 @@ C:000100 9508          ret
          ;           requires delay1mS
          
           delayYx1mS:
-C:000101 940e 010b     call    delay1mS                        ; delay for 1 mS
-C:000103 9721          sbiw    YH:YL, 1                        ; update the the delay counter
-C:000104 f7e1          brne    delayYx1mS                      ; counter is not zero
+C:000103 940e 010d     call    delay1mS                        ; delay for 1 mS
+C:000105 9721          sbiw    YH:YL, 1                        ; update the the delay counter
+C:000106 f7e1          brne    delayYx1mS                      ; counter is not zero
          
          ; arrive here when delay counter is zero (total delay period is finished)
-C:000105 9508          ret
+C:000107 9508          ret
          
          ; ---------------------------------------------------------------------------
          ; Name:     delayTx1mS
@@ -784,12 +797,12 @@ C:000105 9508          ret
          ;           requires delay1mS
          
           delayTx1mS:
-C:000106 940e 010b     call    delay1mS        ; delay for 1 mS
-C:000108 950a          dec     temp_r16        ; update the delay counter
-C:000109 f7e1          brne    delayTx1mS      ; counter is not zero
+C:000108 940e 010d     call    delay1mS        ; delay for 1 mS
+C:00010a 950a          dec     temp_r16        ; update the delay counter
+C:00010b f7e1          brne    delayTx1mS      ; counter is not zero
          
          ; arrive here when delay counter is zero (total delay period is finished)
-C:00010a 9508          ret
+C:00010c 9508          ret
          
          ; ---------------------------------------------------------------------------
          ; Name:     delay1mS
@@ -799,19 +812,19 @@ C:00010a 9508          ret
          ; Notes:    chews up fclk/1000 clock cycles (including the 'call')
          
           delay1mS:
-C:00010b 93cf          push    YL                              ; [2] preserve registers
-C:00010c 93df          push    YH                              ; [2]
-C:00010d e9cb          ldi     YL, low (((fclk/1000)-18)/4)    ; [1] delay counter
-C:00010e e0df          ldi     YH, high(((fclk/1000)-18)/4)    ; [1]
+C:00010d 93cf          push    YL                              ; [2] preserve registers
+C:00010e 93df          push    YH                              ; [2]
+C:00010f e9cb          ldi     YL, low (((fclk/1000)-18)/4)    ; [1] delay counter
+C:000110 e0df          ldi     YH, high(((fclk/1000)-18)/4)    ; [1]
          
           delay1mS_01:
-C:00010f 9721          sbiw    YH:YL, 1                        ; [2] update the the delay counter
-C:000110 f7f1          brne    delay1mS_01                     ; [2] delay counter is not zero
+C:000111 9721          sbiw    YH:YL, 1                        ; [2] update the the delay counter
+C:000112 f7f1          brne    delay1mS_01                     ; [2] delay counter is not zero
          
          ; arrive here when delay counter is zero
-C:000111 91df          pop     YH                              ; [2] restore registers
-C:000112 91cf          pop     YL                              ; [2]
-C:000113 9508          ret                                     ; [4]
+C:000113 91df          pop     YH                              ; [2] restore registers
+C:000114 91cf          pop     YL                              ; [2]
+C:000115 9508          ret                                     ; [4]
          
          ; ---------------------------------------------------------------------------
          ; Name:     delayTx1uS
@@ -822,12 +835,12 @@ C:000113 9508          ret                                     ; [4]
          ;           requires delay1uS
          
           delayTx1uS:
-C:000114 940e 0119     call    delay1uS                        ; delay for 1 uS
-C:000116 950a          dec     temp_r16                        ; decrement the delay counter
-C:000117 f7e1          brne    delayTx1uS                      ; counter is not zero
+C:000116 940e 011b     call    delay1uS                        ; delay for 1 uS
+C:000118 950a          dec     temp_r16                        ; decrement the delay counter
+C:000119 f7e1          brne    delayTx1uS                      ; counter is not zero
          
          ; arrive here when delay counter is zero (total delay period is finished)
-C:000118 9508          ret
+C:00011a 9508          ret
          
          ; ---------------------------------------------------------------------------
          ; Name:     delay1uS
@@ -837,307 +850,307 @@ C:000118 9508          ret
          ; Notes:    add another push/pop for 20 MHz clock frequency
          
           delay1uS:
-C:000119 930f          push    temp_r16                            ; [2] these instructions do nothing except consume clock cycles
-C:00011a 910f          pop     temp_r16                            ; [2]
-C:00011b 930f          push    temp_r16                            ; [2]
+C:00011b 930f          push    temp_r16                            ; [2] these instructions do nothing except consume clock cycles
 C:00011c 910f          pop     temp_r16                            ; [2]
-C:00011d 9508          ret                                     ; [4]
+C:00011d 930f          push    temp_r16                            ; [2]
+C:00011e 910f          pop     temp_r16                            ; [2]
+C:00011f 9508          ret                                     ; [4]
          
          ; ============================== End of Time Delay Subroutines ==============
           ; ============================== End of Time Delay Subroutines ==============
-C:00011e   +  RESET:          init_sp         ; Initialize the Stack Pointer
-C:00011e ef0f      ldi r16,low(RAMEND)
-C:00011f bf0d      out SPL,r16
-C:000120 e008      ldi r16,high(RAMEND)
-C:000121 bf0e      out SPH,r16
+C:000120   +  RESET:          init_sp         ; Initialize the Stack Pointer
+C:000120 ef0f      ldi r16,low(RAMEND)
+C:000121 bf0d      out SPL,r16
+C:000122 e008      ldi r16,high(RAMEND)
+C:000123 bf0e      out SPH,r16
          
            ;; Timer Setup
            ;;  -Control Registers
-C:000122 e000                      ldi temp_r16, t16wgm_lo
-C:000123 9300 0080                 sts TCCR1A, temp_r16
+C:000124 e000                      ldi temp_r16, t16wgm_lo
+C:000125 9300 0080                 sts TCCR1A, temp_r16
          
-C:000125 e003                      ldi temp_r16, t16cs         ; Clock Source (Curr: x1 Prescale)
-C:000126 6008                      ori temp_r16, t16wgm_hi
-C:000127 9300 0081                 sts TCCR1B, temp_r16
+C:000127 e003                      ldi temp_r16, t16cs         ; Clock Source (Curr: x1 Prescale)
+C:000128 6008                      ori temp_r16, t16wgm_hi
+C:000129 9300 0081                 sts TCCR1B, temp_r16
          
-C:000129 e000                      ldi temp_r16, $00 ; TODO: Add constant for this
-C:00012a 9300 0082                 sts TCCR1C, temp_r16
+C:00012b e000                      ldi temp_r16, $00 ; TODO: Add constant for this
+C:00012c 9300 0082                 sts TCCR1C, temp_r16
          
            ;;  -Output Compare Registers
-C:00012c e51f                      ldi temp_r17, ocr_high
-C:00012d ef0f                      ldi temp_r16, ocr_low
-C:00012e 9310 0089                 sts OCR1AH, temp_r17
-C:000130 9300 0088                 sts OCR1AL, temp_r16
+C:00012e e51f                      ldi temp_r17, ocr_high
+C:00012f ef0f                      ldi temp_r16, ocr_low
+C:000130 9310 0089                 sts OCR1AH, temp_r17
+C:000132 9300 0088                 sts OCR1AL, temp_r16
          
            ;;  -Interupt Mask
-C:000132 e002                      ldi temp_r16, t16im
-C:000133 9300 006f                 sts TIMSK1, temp_r16
+C:000134 e002                      ldi temp_r16, t16im
+C:000135 9300 006f                 sts TIMSK1, temp_r16
          
            ;; Power Reduction Register
-C:000135 7f0e                      andi temp_r16, prr_startup
-C:000136 9300 0064                 sts PRR, temp_r16
+C:000137 7f0e                      andi temp_r16, prr_startup
+C:000138 9300 0064                 sts PRR, temp_r16
          
            ;; ADC Multiplexer Selection Register
-C:000138 e600                      ldi temp_r16, adc_mul_sel
-C:000139 9300 007c                 sts ADMUX, temp_r16
+C:00013a e600                      ldi temp_r16, adc_mul_sel
+C:00013b 9300 007c                 sts ADMUX, temp_r16
          
            ;; Digital Input Disable Register
-C:00013b e001                      ldi temp_r16, di_dis_startup
-C:00013c 9300 007e                 sts DIDR0, temp_r16
+C:00013d e001                      ldi temp_r16, di_dis_startup
+C:00013e 9300 007e                 sts DIDR0, temp_r16
          
            ;; External Interrupt Control Register A
-C:00013e e003                      ldi temp_r16, ext_int_ctrl_a
-C:00013f 9300 0069                 sts EICRA,temp_r16
+C:000140 e003                      ldi temp_r16, ext_int_ctrl_a
+C:000141 9300 0069                 sts EICRA,temp_r16
          
            ;; External Interrupt Mask Register
-C:000141 e000                      ldi temp_r16, ext_int_msk
-C:000142 9300 001d                 sts EIMSK, temp_r16
+C:000143 e000                      ldi temp_r16, ext_int_msk
+C:000144 9300 001d                 sts EIMSK, temp_r16
          
            ;; ADC Control and Status Register A
-C:000144 ee0f                      ldi temp_r16, adc_ctrl_a
-C:000145 9300 007a                 sts ADCSRA, temp_r16
+C:000146 ee0f                      ldi temp_r16, adc_ctrl_a
+C:000147 9300 007a                 sts ADCSRA, temp_r16
          
            ;; ADC Control and Status Register B
-C:000147 e000                      ldi temp_r16, adc_ctrl_b
-C:000148 9300 007b                 sts ADCSRB, temp_r16
+C:000149 e000                      ldi temp_r16, adc_ctrl_b
+C:00014a 9300 007b                 sts ADCSRB, temp_r16
          
          
-C:00014a 940e 0083                 call lcd_init_4d              ; Initialize LCD display for 4-bit interface
+C:00014c 940e 0085                 call lcd_init_4d              ; Initialize LCD display for 4-bit interface
          
            ;; Clear Display Instruction
-C:00014c e001                      ldi temp_r16, lcd_Clear       ; r16 = clear display instruction
-C:00014d 940e 00e3                 call lcd_write_instruction_4d
+C:00014e e001                      ldi temp_r16, lcd_Clear       ; r16 = clear display instruction
+C:00014f 940e 00e5                 call lcd_write_instruction_4d
          
          
            ;; Initialize Registers
-C:00014f 2722                      clr tnth_sec_reg
-C:000150 2733                      clr sec_reg
-C:000151 2744                      clr min_reg
-C:000152 2755                      clr hour_reg
-C:000153 2766                      clr adc_res
-C:000154 2777                      clr time_set
+C:000151 2722                      clr tnth_sec_reg
+C:000152 2733                      clr sec_reg
+C:000153 2744                      clr min_reg
+C:000154 2755                      clr hour_reg
+C:000155 2766                      clr adc_res
          				;clr sts_reg
-C:000155 e094      				ldi sts_reg, (1 << dsp_upd)
+C:000156 e084      				        ldi sts_reg, (1 << dsp_upd)
          
            ;; Global Interupt Enable
-C:000156 9478                      sei
+C:000157 9478                      sei
          
            ;; Intialization of port for proper analog input
-C:000157 ef0e                      ldi temp_r16, 0b11111110
-C:000158 b907                      out DDRC,temp_r16 ; set PortC to output, ADC0 input
-C:000159 2700                      clr temp_r16
-C:00015a b908                      out PortC,temp_r16 ; set PortC to 0V
+C:000158 ef0e                      ldi temp_r16, 0b11111110
+C:000159 b907                      out DDRC,temp_r16 ; set PortC to output, ADC0 input
+C:00015a 2700                      clr temp_r16
+C:00015b b908                      out PortC,temp_r16 ; set PortC to 0V
          
            ;; Waiting Loop
-C:00015b 2f09      wait_loop:      mov temp_r16, sts_reg
-C:00015c 7004                      andi temp_r16, (1 << dsp_upd)
-C:00015d 3004                      cpi temp_r16, (1 << dsp_upd)
-C:00015e f7e1                      brne wait_loop
+C:00015c   +  wait_loop:      cpbit temp_r16, sts_reg, dsp_upd, 1
+C:00015c 2f08      mov temp_r16, sts_reg
+C:00015d 7004      andi temp_r16, (1 << dsp_upd)
+C:00015e 3004      cpi temp_r16, (1 << dsp_upd)
+C:00015f f7e1                      brne wait_loop
          
-C:00015f   +                  hex_to_dec_str_two_dig sec_reg, sec_str ; Convert and store time values
-C:00015f 933f      push sec_reg
-C:000160 930f      push r16
-C:000161 931f      push r17
-C:000162 3634      cpi sec_reg, $64
-C:000163 f464      brge hex_to_letter_out_of_range
-C:000164 e01a      ldi r17, 10
-C:000165   +  int_div sec_reg, r17, r16
-C:000165 2700      clr r16
-C:000166 1731      int_div_loop:   cp sec_reg, r17
-C:000167 f024      brlt int_div_done
-C:000168 9503      inc r16
-C:000169 1b31      sub sec_reg, r17
-C:00016a 940c 0166 jmp int_div_loop
+C:000160   +                  hex_to_dec_str_two_dig sec_reg, sec_str ; Convert and store time values
+C:000160 933f      push sec_reg
+C:000161 930f      push r16
+C:000162 931f      push r17
+C:000163 3634      cpi sec_reg, $64
+C:000164 f464      brge hex_to_letter_out_of_range
+C:000165 e01a      ldi r17, 10
+C:000166   +  int_div sec_reg, r17, r16
+C:000166 2700      clr r16
+C:000167 1731      int_div_loop:   cp sec_reg, r17
+C:000168 f024      brlt int_div_done
+C:000169 9503      inc r16
+C:00016a 1b31      sub sec_reg, r17
+C:00016b 940c 0167 jmp int_div_loop
           int_div_done:
-C:00016c 5d00      subi r16, -0x30                   
+C:00016d 5d00      subi r16, -0x30                   
 
-C:00016d 5d30      subi sec_reg, -0x30                   
+C:00016e 5d30      subi sec_reg, -0x30                   
 
-C:00016e 940c 0172 jmp hex_to_letter_store
+C:00016f 940c 0173 jmp hex_to_letter_store
           hex_to_letter_out_of_range:
-C:000170 e213      ldi r17, '#'
-C:000171 e203      ldi r16, '#'
+C:000171 e213      ldi r17, '#'
+C:000172 e203      ldi r16, '#'
           hex_to_letter_store:
-C:000172 93af      push XL
-C:000173 93bf      push XH
-C:000174 e0b1      ldi XH, high(sec_str)                 
+C:000173 93af      push XL
+C:000174 93bf      push XH
+C:000175 e0b1      ldi XH, high(sec_str)                 
 
-C:000175 e0a3      ldi XL, low(sec_str)                  
+C:000176 e0a3      ldi XL, low(sec_str)                  
 
-C:000176 930d      st X+, r16
-C:000177 933d      st X+, sec_reg
-C:000178 2711      clr r17
-C:000179 931c      st X, r17                  
+C:000177 930d      st X+, r16
+C:000178 933d      st X+, sec_reg
+C:000179 2711      clr r17
+C:00017a 931c      st X, r17                  
 
-C:00017a 91bf      pop XH
-C:00017b 91af      pop XL
-C:00017c 911f      pop r17
-C:00017d 910f      pop r16
-C:00017e 913f      pop sec_reg
-C:00017f   +                  hex_to_dec_str_two_dig min_reg, min_str
-C:00017f 934f      push min_reg
-C:000180 930f      push r16
-C:000181 931f      push r17
-C:000182 3644      cpi min_reg, $64
-C:000183 f464      brge hex_to_letter_out_of_range
-C:000184 e01a      ldi r17, 10
-C:000185   +  int_div min_reg, r17, r16
-C:000185 2700      clr r16
-C:000186 1741      int_div_loop:   cp min_reg, r17
-C:000187 f024      brlt int_div_done
-C:000188 9503      inc r16
-C:000189 1b41      sub min_reg, r17
-C:00018a 940c 0186 jmp int_div_loop
+C:00017b 91bf      pop XH
+C:00017c 91af      pop XL
+C:00017d 911f      pop r17
+C:00017e 910f      pop r16
+C:00017f 913f      pop sec_reg
+C:000180   +                  hex_to_dec_str_two_dig min_reg, min_str
+C:000180 934f      push min_reg
+C:000181 930f      push r16
+C:000182 931f      push r17
+C:000183 3644      cpi min_reg, $64
+C:000184 f464      brge hex_to_letter_out_of_range
+C:000185 e01a      ldi r17, 10
+C:000186   +  int_div min_reg, r17, r16
+C:000186 2700      clr r16
+C:000187 1741      int_div_loop:   cp min_reg, r17
+C:000188 f024      brlt int_div_done
+C:000189 9503      inc r16
+C:00018a 1b41      sub min_reg, r17
+C:00018b 940c 0187 jmp int_div_loop
           int_div_done:
-C:00018c 5d00      subi r16, -0x30                   
+C:00018d 5d00      subi r16, -0x30                   
 
-C:00018d 5d40      subi min_reg, -0x30                   
+C:00018e 5d40      subi min_reg, -0x30                   
 
-C:00018e 940c 0192 jmp hex_to_letter_store
+C:00018f 940c 0193 jmp hex_to_letter_store
           hex_to_letter_out_of_range:
-C:000190 e213      ldi r17, '#'
-C:000191 e203      ldi r16, '#'
+C:000191 e213      ldi r17, '#'
+C:000192 e203      ldi r16, '#'
           hex_to_letter_store:
-C:000192 93af      push XL
-C:000193 93bf      push XH
-C:000194 e0b1      ldi XH, high(min_str)                 
+C:000193 93af      push XL
+C:000194 93bf      push XH
+C:000195 e0b1      ldi XH, high(min_str)                 
 
-C:000195 e0a6      ldi XL, low(min_str)                  
+C:000196 e0a6      ldi XL, low(min_str)                  
 
-C:000196 930d      st X+, r16
-C:000197 934d      st X+, min_reg
-C:000198 2711      clr r17
-C:000199 931c      st X, r17                  
+C:000197 930d      st X+, r16
+C:000198 934d      st X+, min_reg
+C:000199 2711      clr r17
+C:00019a 931c      st X, r17                  
 
-C:00019a 91bf      pop XH
-C:00019b 91af      pop XL
-C:00019c 911f      pop r17
-C:00019d 910f      pop r16
-C:00019e 914f      pop min_reg
-C:00019f   +                  hex_to_dec_str_two_dig hour_reg, hour_str
-C:00019f 935f      push hour_reg
-C:0001a0 930f      push r16
-C:0001a1 931f      push r17
-C:0001a2 3654      cpi hour_reg, $64
-C:0001a3 f464      brge hex_to_letter_out_of_range
-C:0001a4 e01a      ldi r17, 10
-C:0001a5   +  int_div hour_reg, r17, r16
-C:0001a5 2700      clr r16
-C:0001a6 1751      int_div_loop:   cp hour_reg, r17
-C:0001a7 f024      brlt int_div_done
-C:0001a8 9503      inc r16
-C:0001a9 1b51      sub hour_reg, r17
-C:0001aa 940c 01a6 jmp int_div_loop
+C:00019b 91bf      pop XH
+C:00019c 91af      pop XL
+C:00019d 911f      pop r17
+C:00019e 910f      pop r16
+C:00019f 914f      pop min_reg
+C:0001a0   +                  hex_to_dec_str_two_dig hour_reg, hour_str
+C:0001a0 935f      push hour_reg
+C:0001a1 930f      push r16
+C:0001a2 931f      push r17
+C:0001a3 3654      cpi hour_reg, $64
+C:0001a4 f464      brge hex_to_letter_out_of_range
+C:0001a5 e01a      ldi r17, 10
+C:0001a6   +  int_div hour_reg, r17, r16
+C:0001a6 2700      clr r16
+C:0001a7 1751      int_div_loop:   cp hour_reg, r17
+C:0001a8 f024      brlt int_div_done
+C:0001a9 9503      inc r16
+C:0001aa 1b51      sub hour_reg, r17
+C:0001ab 940c 01a7 jmp int_div_loop
           int_div_done:
-C:0001ac 5d00      subi r16, -0x30                   
+C:0001ad 5d00      subi r16, -0x30                   
 
-C:0001ad 5d50      subi hour_reg, -0x30                   
+C:0001ae 5d50      subi hour_reg, -0x30                   
 
-C:0001ae 940c 01b2 jmp hex_to_letter_store
+C:0001af 940c 01b3 jmp hex_to_letter_store
           hex_to_letter_out_of_range:
-C:0001b0 e213      ldi r17, '#'
-C:0001b1 e203      ldi r16, '#'
+C:0001b1 e213      ldi r17, '#'
+C:0001b2 e203      ldi r16, '#'
           hex_to_letter_store:
-C:0001b2 93af      push XL
-C:0001b3 93bf      push XH
-C:0001b4 e0b1      ldi XH, high(hour_str)                 
+C:0001b3 93af      push XL
+C:0001b4 93bf      push XH
+C:0001b5 e0b1      ldi XH, high(hour_str)                 
 
-C:0001b5 e0a9      ldi XL, low(hour_str)                  
+C:0001b6 e0a9      ldi XL, low(hour_str)                  
 
-C:0001b6 930d      st X+, r16
-C:0001b7 935d      st X+, hour_reg
-C:0001b8 2711      clr r17
-C:0001b9 931c      st X, r17                  
+C:0001b7 930d      st X+, r16
+C:0001b8 935d      st X+, hour_reg
+C:0001b9 2711      clr r17
+C:0001ba 931c      st X, r17                  
 
-C:0001ba 91bf      pop XH
-C:0001bb 91af      pop XL
-C:0001bc 911f      pop r17
-C:0001bd 910f      pop r16
-C:0001be 915f      pop hour_reg
+C:0001bb 91bf      pop XH
+C:0001bc 91af      pop XL
+C:0001bd 911f      pop r17
+C:0001be 910f      pop r16
+C:0001bf 915f      pop hour_reg
          
-C:0001bf e000                      ldi temp_r16, $00           ; Set cursor to Begining of first line
-C:0001c0 6800                      ori temp_r16, lcd_SetCursor       ; convert the plain address to a set cursor instruction
-C:0001c1 940e 00e3                 call lcd_write_instruction_4d
+C:0001c0 e000                      ldi temp_r16, $00           ; Set cursor to Begining of first line
+C:0001c1 6800                      ori temp_r16, lcd_SetCursor       ; convert the plain address to a set cursor instruction
+C:0001c2 940e 00e5                 call lcd_write_instruction_4d
          
-C:0001c3   +                  disp_from_sram hour_str, clk_hr_loc
-C:0001c3 930f      push r16
-C:0001c4 93af      push XL
-C:0001c5 93bf      push XH
-C:0001c6 e0b1      ldi XH, high(hour_str) 
+C:0001c4   +                  disp_from_sram hour_str, clk_hr_loc
+C:0001c4 930f      push r16
+C:0001c5 93af      push XL
+C:0001c6 93bf      push XH
+C:0001c7 e0b1      ldi XH, high(hour_str) 
 
-C:0001c7 e0a9      ldi XL, low(hour_str)  
+C:0001c8 e0a9      ldi XL, low(hour_str)  
 
-C:0001c8 e000      ldi r16, clk_hr_loc      
+C:0001c9 e000      ldi r16, clk_hr_loc      
 
-C:0001c9 940e 0201 call lcd_write_string_4d_mem
-C:0001cb 91bf      pop XH
-C:0001cc 91af      pop XL
-C:0001cd 910f      pop r16
-C:0001ce   +                  disp_from_pm colon_str, clk_cln1_loc
-C:0001ce 930f      push r16
-C:0001cf 93ef      push ZL
-C:0001d0 93ff      push ZH
-C:0001d1 e0f2      ldi ZH, high(colon_str) 
+C:0001ca 940e 0202 call lcd_write_string_4d_mem
+C:0001cc 91bf      pop XH
+C:0001cd 91af      pop XL
+C:0001ce 910f      pop r16
+C:0001cf   +                  disp_from_pm colon_str, clk_cln1_loc
+C:0001cf 930f      push r16
+C:0001d0 93ef      push ZL
+C:0001d1 93ff      push ZH
+C:0001d2 e0f2      ldi ZH, high(colon_str) 
 
-C:0001d2 e0e0      ldi ZL, low(colon_str)  
+C:0001d3 e0e1      ldi ZL, low(colon_str)  
 
-C:0001d3 e002      ldi r16, clk_cln1_loc      
+C:0001d4 e002      ldi r16, clk_cln1_loc      
 
-C:0001d4 940e 00c5 call lcd_write_string_4d
-C:0001d6 910f      pop r16
-C:0001d7 91ff      pop ZH
-C:0001d8 91ef      pop ZL
-C:0001d9   +                  disp_from_sram min_str, clk_mn_loc
-C:0001d9 930f      push r16
-C:0001da 93af      push XL
-C:0001db 93bf      push XH
-C:0001dc e0b1      ldi XH, high(min_str) 
+C:0001d5 940e 00c7 call lcd_write_string_4d
+C:0001d7 910f      pop r16
+C:0001d8 91ff      pop ZH
+C:0001d9 91ef      pop ZL
+C:0001da   +                  disp_from_sram min_str, clk_mn_loc
+C:0001da 930f      push r16
+C:0001db 93af      push XL
+C:0001dc 93bf      push XH
+C:0001dd e0b1      ldi XH, high(min_str) 
 
-C:0001dd e0a6      ldi XL, low(min_str)  
+C:0001de e0a6      ldi XL, low(min_str)  
 
-C:0001de e003      ldi r16, clk_mn_loc      
+C:0001df e003      ldi r16, clk_mn_loc      
 
-C:0001df 940e 0201 call lcd_write_string_4d_mem
-C:0001e1 91bf      pop XH
-C:0001e2 91af      pop XL
-C:0001e3 910f      pop r16
-C:0001e4   +                  disp_from_pm colon_str, clk_cln2_loc
-C:0001e4 930f      push r16
-C:0001e5 93ef      push ZL
-C:0001e6 93ff      push ZH
-C:0001e7 e0f2      ldi ZH, high(colon_str) 
+C:0001e0 940e 0202 call lcd_write_string_4d_mem
+C:0001e2 91bf      pop XH
+C:0001e3 91af      pop XL
+C:0001e4 910f      pop r16
+C:0001e5   +                  disp_from_pm colon_str, clk_cln2_loc
+C:0001e5 930f      push r16
+C:0001e6 93ef      push ZL
+C:0001e7 93ff      push ZH
+C:0001e8 e0f2      ldi ZH, high(colon_str) 
 
-C:0001e8 e0e0      ldi ZL, low(colon_str)  
+C:0001e9 e0e1      ldi ZL, low(colon_str)  
 
-C:0001e9 e005      ldi r16, clk_cln2_loc      
+C:0001ea e005      ldi r16, clk_cln2_loc      
 
-C:0001ea 940e 00c5 call lcd_write_string_4d
-C:0001ec 910f      pop r16
-C:0001ed 91ff      pop ZH
-C:0001ee 91ef      pop ZL
-C:0001ef   +                  disp_from_sram sec_str, clk_sc_loc
-C:0001ef 930f      push r16
-C:0001f0 93af      push XL
-C:0001f1 93bf      push XH
-C:0001f2 e0b1      ldi XH, high(sec_str) 
+C:0001eb 940e 00c7 call lcd_write_string_4d
+C:0001ed 910f      pop r16
+C:0001ee 91ff      pop ZH
+C:0001ef 91ef      pop ZL
+C:0001f0   +                  disp_from_sram sec_str, clk_sc_loc
+C:0001f0 930f      push r16
+C:0001f1 93af      push XL
+C:0001f2 93bf      push XH
+C:0001f3 e0b1      ldi XH, high(sec_str) 
 
-C:0001f3 e0a3      ldi XL, low(sec_str)  
+C:0001f4 e0a3      ldi XL, low(sec_str)  
 
-C:0001f4 e006      ldi r16, clk_sc_loc      
+C:0001f5 e006      ldi r16, clk_sc_loc      
 
-C:0001f5 940e 0201 call lcd_write_string_4d_mem
-C:0001f7 91bf      pop XH
-C:0001f8 91af      pop XL
-C:0001f9 910f      pop r16
-C:0001fa 7f9b                      andi sts_reg, $FF - (1 << dsp_upd)
-C:0001fb e500                      ldi temp_r16, 80
-C:0001fc 940e 0114                 call delayTx1uS
-C:0001fe 940c 015b 	              jmp wait_loop
+C:0001f6 940e 0202 call lcd_write_string_4d_mem
+C:0001f8 91bf      pop XH
+C:0001f9 91af      pop XL
+C:0001fa 910f      pop r16
+C:0001fb 7f8b                      andi sts_reg, $FF - (1 << dsp_upd)
+C:0001fc e500                      ldi temp_r16, 80
+C:0001fd 940e 0116                 call delayTx1uS ; Must have an extra delay to avoid display glitches.
+C:0001ff 940c 015c 	              jmp wait_loop
          
          ;;; Program Constants
             .cseg
           colon_str:      .db ":", 0
-C:000200 3A00
+C:000201 3A00
          ;;; Function Libraries
             .cseg
            ;; .include "LCD-lib.asm"
@@ -1159,17 +1172,17 @@ C:000200 3A00
          ; Notes:    The string must end with a null (0)
          ;           uses time delays instead of checking the busy flag
           lcd_write_string_4d_mem:
-C:000201 930f                      push r16        ; Preserve Registers
+C:000202 930f                      push r16        ; Preserve Registers
          
          ; set up the initial DDRAM address
-C:000202 6800                        ori r16, lcd_SetCursor     ; convert the plain address to a set cursor instruction
-C:000203 940e 00e3                   call lcd_write_instruction_4d    ; set up the first DDRAM address
-C:000205 e500                        ldi r16, 80                ; 40 uS delay (min)
-C:000206 940e 0114                   call delayTx1uS
+C:000203 6800                        ori r16, lcd_SetCursor     ; convert the plain address to a set cursor instruction
+C:000204 940e 00e5                   call lcd_write_instruction_4d    ; set up the first DDRAM address
+C:000206 e500                        ldi r16, 80                ; 40 uS delay (min)
+C:000207 940e 0116                   call delayTx1uS
          
-C:000208 910f                      pop r16
-C:000209 940e 020c                 call lcd_append_string_4d_mem
-C:00020b 9508                      ret
+C:000209 910f                      pop r16
+C:00020a 940e 020d                 call lcd_append_string_4d_mem
+C:00020c 9508                      ret
          
          ;----------------------------------------------------------------------------
          ; Name:     lcd_append_string_4d_mem
@@ -1179,32 +1192,32 @@ C:00020b 9508                      ret
          ; Notes:    The string must end with a null (0)
          ;           uses time delays instead of checking the busy flag
           lcd_append_string_4d_mem:
-C:00020c 930f                      push r16        ; Preserve Registers
-C:00020d 93bf                        push XH
-C:00020e 93af                          push XL
+C:00020d 930f                      push r16        ; Preserve Registers
+C:00020e 93bf                        push XH
+C:00020f 93af                          push XL
          
          ; write the string of characters
           lcd_write_string_4d_mem_01:
-C:00020f 910d                            ld r16, X+                        ; get a character
-C:000210 3000                            cpi r16,  0                        ; check for end of string
-C:000211 f031                            breq lcd_write_string_4d_mem_02          ; done
+C:000210 910d                            ld r16, X+                        ; get a character
+C:000211 3000                            cpi r16,  0                        ; check for end of string
+C:000212 f031                            breq lcd_write_string_4d_mem_02          ; done
          
          ; arrive here if this is a valid character
-C:000212 940e 00db                       call lcd_write_character_4d          ; display the character
-C:000214 e500                            ldi r16, 80                        ; 40 uS delay (min)
-C:000215 940e 0114                       call delayTx1uS
-C:000217 cff7                            rjmp lcd_write_string_4d_mem_01          ; not done, send another character
+C:000213 940e 00dd                       call lcd_write_character_4d          ; display the character
+C:000215 e500                            ldi r16, 80                        ; 40 uS delay (min)
+C:000216 940e 0116                       call delayTx1uS
+C:000218 cff7                            rjmp lcd_write_string_4d_mem_01          ; not done, send another character
          
          ; arrive here when all characters in the message have been sent to the LCD module
           lcd_write_string_4d_mem_02:
-C:000218 91af                          pop XL                              ; restore pointer registers
-C:000219 91bf                        pop XH
-C:00021a 910f                      pop r16
-C:00021b 9508                      ret
+C:000219 91af                          pop XL                              ; restore pointer registers
+C:00021a 91bf                        pop XH
+C:00021b 910f                      pop r16
+C:00021c 9508                      ret
 
 
 Segment usage:
-   Code      :       496 words (992 bytes)
+   Code      :       497 words (994 bytes)
    Data      :        12 bytes
    EEPROM    :         0 bytes
 

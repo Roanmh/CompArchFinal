@@ -61,7 +61,7 @@
   <delay1mS_01><FILE>..\include\LCD-lib.asm</FILE><LINE>393</LINE></delay1mS_01>
   <wait_loop><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>261</LINE></wait_loop>
   <lcd_write_string_4d_mem><FILE>..\include\timer_fxns.inc</FILE><LINE>17</LINE></lcd_write_string_4d_mem>
-  <colon_str><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>284</LINE></colon_str>
+  <colon_str><FILE>C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm</FILE><LINE>287</LINE></colon_str>
   <lcd_append_string_4d_mem><FILE>..\include\timer_fxns.inc</FILE><LINE>37</LINE></lcd_append_string_4d_mem>
   <lcd_write_string_4d_mem_01><FILE>..\include\timer_fxns.inc</FILE><LINE>43</LINE></lcd_write_string_4d_mem_01>
   <lcd_write_string_4d_mem_02><FILE>..\include\timer_fxns.inc</FILE><LINE>55</LINE></lcd_write_string_4d_mem_02>

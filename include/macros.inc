@@ -203,3 +203,16 @@ incr_time_end:
 	              ldi @0L, low(@1)
 	              ldi @0H, high(@1)
   .endmacro
+
+;----------------------------------------------------------------------------
+; Name:     cpbit
+; Purpose:  Compare a single bit of a regitser to an imediate operand
+; Args:     0 - Temporary Register
+;           1 - Register for comparison
+;           2 - Location of bit in register
+;           3 - Immediate operand for comparison
+  .macro cpbit
+                mov @0, @1
+                andi @0, (1 << @2)
+                cpi @0, (@3 << @2)
+  .endmacro
