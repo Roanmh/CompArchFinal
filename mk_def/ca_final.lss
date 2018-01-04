@@ -1,5 +1,5 @@
 
-AVRA   Ver. 1.3.0 src/main.asm Thu Jan 04 17:45:52 2018
+AVRA   Ver. 1.3.0 src/main.asm Thu Jan 04 20:20:15 2018
 
 
          ;- main.asm --------------------------------------------------------------------
@@ -10,7 +10,6 @@ AVRA   Ver. 1.3.0 src/main.asm Thu Jan 04 17:45:52 2018
          ;  Date:        Dec 2017
          ;  Note: Much of the ADC Setup Code is based off of work by Mick Walters
          ;-------------------------------------------------------------------------------
-         
          
          
          ;;; Includes (Non-Function)
@@ -247,14 +246,12 @@ AVRA   Ver. 1.3.0 src/main.asm Thu Jan 04 17:45:52 2018
             .def adc_res      = r22
             .def pgm_sts      = r23
          
-         
-           ;; Contstant Definitions
-         
-           ;; Program Status Register
+          	;; Program Status Register
             .equ time_set = 0
             .equ btn_prs  = 1
             .equ dsp_upd  = 2
          
+           ;; Contstant Definitions
            ; Output Compare Register
             .equ ocr_low  = $FF
             .equ ocr_high = $5F
@@ -314,17 +311,17 @@ D:000109    hour_str:      .byte 3
             .org 0x0000
 C:000000 940c 0122                 jmp RESET        ; Reset Interupt Vecotor
             .org 0x0016
-C:000016 940c 0034                 jmp TIMER1_OVR   ; Timer Output Compare Interupt
+C:000016 940c 0034                 jmp TIMER1_OVR   ; Timer Output Compare Vector
             .org 0x002A
-C:00002a 940c 0052                 jmp ADC_INT      ; ADC Conversion Complete Interrupt
+C:00002a 940c 0052                 jmp ADC_INT      ; ADC Conversion Complete Vector
          
          
          
          ;;; Interupt Service Routines
-            .org INT_VECTORS_SIZE         ; Start Rest of code after Interupt Vectors
+            .org INT_VECTORS_SIZE         ; Start rest of code after Interupt Vectors
          
            ;; Timer Overflow Interupt
-            .cseg                         ; This seems needed to avoid errors
+           ;; .cseg                         ; This seems needed to avoid errors
 C:000034   +  TIMER1_OVR:     cpbit temp_r16, pgm_sts, time_set, 0
 C:000034 2f07      mov temp_r16, pgm_sts
 C:000035 7001      andi temp_r16, (1 << time_set)
@@ -366,10 +363,10 @@ C:000052 9160 0079 ADC_INT:        lds adc_res, ADCH ; Load ADC Result High bit 
          
 C:000054 3f60                      cpi adc_res, 240 ; No button is pressed if adc_res is higher
 C:000055 f010                      brlo ADC_B1
-C:000056 7f7d                      andi pgm_sts, $FF - (1 << btn_prs)
+C:000056 7f7d                      andi pgm_sts, $FF - (1 << btn_prs) ; Clear button pressed state
 C:000057 9518                      reti            ; Take no action
          
-C:000058   +  ADC_B1:         cpbit temp_r16, pgm_sts, btn_prs, 0
+C:000058   +  ADC_B1:         cpbit temp_r16, pgm_sts, btn_prs, 0 ; Check for button pressed state
 C:000058 2f07      mov temp_r16, pgm_sts
 C:000059 7002      andi temp_r16, (1 << btn_prs)
 C:00005a 3000      cpi temp_r16, (0 << btn_prs)
@@ -381,34 +378,34 @@ C:00005e f028                      brlo ADC_B2
          
 C:00005f e001                      ldi temp_r16, (1 << time_set) ; time_set[0]=0->1 or time_set[0]=1->0
 C:000060 2770                      eor pgm_sts, temp_r16
-C:000061 6072                      ori pgm_sts, (1 << btn_prs)
+C:000061 6076                      ori pgm_sts, (1 << btn_prs) + (1 << dsp_upd) ; Set button pressed state
 C:000062 940c 0086                 jmp ADC_UPD_DISP
          
-C:000064 356a      ADC_B2:         cpi adc_res, 90 ; Button 2 is pressed if  adc_res is higher
+C:000064 356a      ADC_B2:         cpi adc_res, 90 ; Button 2 is pressed if adc_res is higher
 C:000065 f038                      brlo ADC_B3
 C:000066 9553                      inc hour_reg
 C:000067 3158                      cpi hour_reg, 24
 C:000068 f00c                      brlt ADC_B2_1
 C:000069 2755                      clr hour_reg
-C:00006a 6072      ADC_B2_1:       ori pgm_sts, (1 << btn_prs)
+C:00006a 6076      ADC_B2_1:       ori pgm_sts, (1 << btn_prs)	+ (1 << dsp_upd) ; Set button pressed state
 C:00006b 940c 0086                 jmp ADC_UPD_DISP
          
-C:00006d 3367      ADC_B3:         cpi adc_res, 55 ; Button 3 is pressed if  adc_res is higher
+C:00006d 3367      ADC_B3:         cpi adc_res, 55 ; Button 3 is pressed if adc_res is higher
 C:00006e f038                      brlo ADC_B4
 C:00006f 9543                      inc min_reg
 C:000070 334c                      cpi min_reg, 60
 C:000071 f00c                      brlt ADC_B3_1
 C:000072 2744                      clr min_reg
-C:000073 6072      ADC_B3_1:       ori pgm_sts, (1 << btn_prs)
+C:000073 6076      ADC_B3_1:       ori pgm_sts, (1 << btn_prs)	+ (1 << dsp_upd) ; Set button pressed state
 C:000074 940c 0086                 jmp ADC_UPD_DISP
          
-C:000076 3164      ADC_B4:         cpi adc_res, 20 ; Button 3 is pressed if  adc_res is higher
+C:000076 3164      ADC_B4:         cpi adc_res, 20 ; Button 3 is pressed if adc_res is higher
 C:000077 f038                      brlo ADC_B5
 C:000078 5f46                      subi min_reg, -10
 C:000079 334c                      cpi min_reg, 60
 C:00007a f00c                      brlt ADC_B4_1
 C:00007b 534c                      subi min_reg, 60
-C:00007c 6072      ADC_B4_1:       ori pgm_sts, (1 << btn_prs)
+C:00007c 6076      ADC_B4_1:       ori pgm_sts, (1 << btn_prs)	+ (1 << dsp_upd) ; Set button pressed state
 C:00007d 940c 0086                 jmp ADC_UPD_DISP
          
 C:00007f 3030      ADC_B5:         cpi sec_reg, 0
@@ -417,7 +414,7 @@ C:000080 f019                      breq ADC_B5_2
 C:000081 2733                      clr sec_reg
 C:000082 940c 0085                 jmp ADC_B5_3
 C:000084 e13e      ADC_B5_2:       ldi sec_reg, 30
-C:000085 6072      ADC_B5_3:       ori pgm_sts, (1 << btn_prs)
+C:000085 6076      ADC_B5_3:       ori pgm_sts, (1 << btn_prs) + (1 << dsp_upd) ; Set button pressed state
          
 C:000086 9518      ADC_UPD_DISP:   reti
          
@@ -1072,87 +1069,89 @@ C:0001c2 94f8                      cli               ; This and the following se
 C:0001c3 e000                      ldi temp_r16, $00           ; Set cursor to Begining of first line
 C:0001c4 6800                      ori temp_r16, lcd_SetCursor       ; convert the plain address to a set cursor instruction
 C:0001c5 940e 00e7                 call lcd_write_instruction_4d
+C:0001c7 9478                      sei
          
-C:0001c7   +                  disp_from_sram hour_str, clk_hr_loc
-C:0001c7 930f      push r16
-C:0001c8 93af      push XL
-C:0001c9 93bf      push XH
-C:0001ca e0b1      ldi XH, high(hour_str) 
+C:0001c8 94f8                      cli
+C:0001c9   +                  disp_from_sram hour_str, clk_hr_loc ; Display each part of the clock
+C:0001c9 930f      push r16
+C:0001ca 93af      push XL
+C:0001cb 93bf      push XH
+C:0001cc e0b1      ldi XH, high(hour_str) 
 
-C:0001cb e0a9      ldi XL, low(hour_str)  
+C:0001cd e0a9      ldi XL, low(hour_str)  
 
-C:0001cc e000      ldi r16, clk_hr_loc      
+C:0001ce e000      ldi r16, clk_hr_loc      
 
-C:0001cd 940e 0206 call lcd_write_string_4d_mem
-C:0001cf 91bf      pop XH
-C:0001d0 91af      pop XL
-C:0001d1 910f      pop r16
-C:0001d2   +                  disp_from_pm colon_str, clk_cln1_loc
-C:0001d2 930f      push r16
-C:0001d3 93ef      push ZL
-C:0001d4 93ff      push ZH
-C:0001d5 e0f2      ldi ZH, high(colon_str) 
+C:0001cf 940e 0208 call lcd_write_string_4d_mem
+C:0001d1 91bf      pop XH
+C:0001d2 91af      pop XL
+C:0001d3 910f      pop r16
+C:0001d4   +                  disp_from_pm colon_str, clk_cln1_loc
+C:0001d4 930f      push r16
+C:0001d5 93ef      push ZL
+C:0001d6 93ff      push ZH
+C:0001d7 e0f2      ldi ZH, high(colon_str) 
 
-C:0001d6 e0e5      ldi ZL, low(colon_str)  
+C:0001d8 e0e7      ldi ZL, low(colon_str)  
 
-C:0001d7 e002      ldi r16, clk_cln1_loc      
+C:0001d9 e002      ldi r16, clk_cln1_loc      
 
-C:0001d8 940e 00c9 call lcd_write_string_4d
-C:0001da 910f      pop r16
-C:0001db 91ff      pop ZH
-C:0001dc 91ef      pop ZL
-C:0001dd   +                  disp_from_sram min_str, clk_mn_loc
-C:0001dd 930f      push r16
-C:0001de 93af      push XL
-C:0001df 93bf      push XH
-C:0001e0 e0b1      ldi XH, high(min_str) 
+C:0001da 940e 00c9 call lcd_write_string_4d
+C:0001dc 910f      pop r16
+C:0001dd 91ff      pop ZH
+C:0001de 91ef      pop ZL
+C:0001df   +                  disp_from_sram min_str, clk_mn_loc
+C:0001df 930f      push r16
+C:0001e0 93af      push XL
+C:0001e1 93bf      push XH
+C:0001e2 e0b1      ldi XH, high(min_str) 
 
-C:0001e1 e0a6      ldi XL, low(min_str)  
+C:0001e3 e0a6      ldi XL, low(min_str)  
 
-C:0001e2 e003      ldi r16, clk_mn_loc      
+C:0001e4 e003      ldi r16, clk_mn_loc      
 
-C:0001e3 940e 0206 call lcd_write_string_4d_mem
-C:0001e5 91bf      pop XH
-C:0001e6 91af      pop XL
-C:0001e7 910f      pop r16
-C:0001e8   +                  disp_from_pm colon_str, clk_cln2_loc
-C:0001e8 930f      push r16
-C:0001e9 93ef      push ZL
-C:0001ea 93ff      push ZH
-C:0001eb e0f2      ldi ZH, high(colon_str) 
+C:0001e5 940e 0208 call lcd_write_string_4d_mem
+C:0001e7 91bf      pop XH
+C:0001e8 91af      pop XL
+C:0001e9 910f      pop r16
+C:0001ea   +                  disp_from_pm colon_str, clk_cln2_loc
+C:0001ea 930f      push r16
+C:0001eb 93ef      push ZL
+C:0001ec 93ff      push ZH
+C:0001ed e0f2      ldi ZH, high(colon_str) 
 
-C:0001ec e0e5      ldi ZL, low(colon_str)  
+C:0001ee e0e7      ldi ZL, low(colon_str)  
 
-C:0001ed e005      ldi r16, clk_cln2_loc      
+C:0001ef e005      ldi r16, clk_cln2_loc      
 
-C:0001ee 940e 00c9 call lcd_write_string_4d
-C:0001f0 910f      pop r16
-C:0001f1 91ff      pop ZH
-C:0001f2 91ef      pop ZL
-C:0001f3   +                  disp_from_sram sec_str, clk_sc_loc
-C:0001f3 930f      push r16
-C:0001f4 93af      push XL
-C:0001f5 93bf      push XH
-C:0001f6 e0b1      ldi XH, high(sec_str) 
+C:0001f0 940e 00c9 call lcd_write_string_4d
+C:0001f2 910f      pop r16
+C:0001f3 91ff      pop ZH
+C:0001f4 91ef      pop ZL
+C:0001f5   +                  disp_from_sram sec_str, clk_sc_loc
+C:0001f5 930f      push r16
+C:0001f6 93af      push XL
+C:0001f7 93bf      push XH
+C:0001f8 e0b1      ldi XH, high(sec_str) 
 
-C:0001f7 e0a3      ldi XL, low(sec_str)  
+C:0001f9 e0a3      ldi XL, low(sec_str)  
 
-C:0001f8 e006      ldi r16, clk_sc_loc      
+C:0001fa e006      ldi r16, clk_sc_loc      
 
-C:0001f9 940e 0206 call lcd_write_string_4d_mem
-C:0001fb 91bf      pop XH
-C:0001fc 91af      pop XL
-C:0001fd 910f      pop r16
-C:0001fe 7f7b                      andi pgm_sts, $FF - (1 << dsp_upd)
-C:0001ff e500                      ldi temp_r16, 80
-C:000200 940e 0118                 call delayTx1uS ; Must have an extra delay to avoid display glitches.
-C:000202 9478                      sei
-C:000203 940c 015e                 jmp wait_loop
+C:0001fb 940e 0208 call lcd_write_string_4d_mem
+C:0001fd 91bf      pop XH
+C:0001fe 91af      pop XL
+C:0001ff 910f      pop r16
+C:000200 7f7b                      andi pgm_sts, $FF - (1 << dsp_upd)
+C:000201 e500                      ldi temp_r16, 80
+C:000202 940e 0118                 call delayTx1uS ; Must have an extra delay to avoid display glitches.
+C:000204 9478                      sei
+C:000205 940c 015e                 jmp wait_loop
          
          ;;; Program Constants
             .cseg
           colon_str:      .db ":", 0
-C:000205 3A00
+C:000207 3A00
          ;;; Function Libraries
             .cseg
            ;; .include "LCD-lib.asm"
@@ -1174,17 +1173,17 @@ C:000205 3A00
          ; Notes:    The string must end with a null (0)
          ;           uses time delays instead of checking the busy flag
           lcd_write_string_4d_mem:
-C:000206 930f                      push r16        ; Preserve Registers
+C:000208 930f                      push r16        ; Preserve Registers
          
          ; set up the initial DDRAM address
-C:000207 6800                        ori r16, lcd_SetCursor     ; convert the plain address to a set cursor instruction
-C:000208 940e 00e7                   call lcd_write_instruction_4d    ; set up the first DDRAM address
-C:00020a e500                        ldi r16, 80                ; 40 uS delay (min)
-C:00020b 940e 0118                   call delayTx1uS
+C:000209 6800                        ori r16, lcd_SetCursor     ; convert the plain address to a set cursor instruction
+C:00020a 940e 00e7                   call lcd_write_instruction_4d    ; set up the first DDRAM address
+C:00020c e500                        ldi r16, 80                ; 40 uS delay (min)
+C:00020d 940e 0118                   call delayTx1uS
          
-C:00020d 910f                      pop r16
-C:00020e 940e 0211                 call lcd_append_string_4d_mem
-C:000210 9508                      ret
+C:00020f 910f                      pop r16
+C:000210 940e 0213                 call lcd_append_string_4d_mem
+C:000212 9508                      ret
          
          ;----------------------------------------------------------------------------
          ; Name:     lcd_append_string_4d_mem
@@ -1194,32 +1193,32 @@ C:000210 9508                      ret
          ; Notes:    The string must end with a null (0)
          ;           uses time delays instead of checking the busy flag
           lcd_append_string_4d_mem:
-C:000211 930f                      push r16        ; Preserve Registers
-C:000212 93bf                        push XH
-C:000213 93af                          push XL
+C:000213 930f                      push r16        ; Preserve Registers
+C:000214 93bf                        push XH
+C:000215 93af                          push XL
          
          ; write the string of characters
           lcd_write_string_4d_mem_01:
-C:000214 910d                            ld r16, X+                        ; get a character
-C:000215 3000                            cpi r16,  0                        ; check for end of string
-C:000216 f031                            breq lcd_write_string_4d_mem_02          ; done
+C:000216 910d                            ld r16, X+                        ; get a character
+C:000217 3000                            cpi r16,  0                        ; check for end of string
+C:000218 f031                            breq lcd_write_string_4d_mem_02          ; done
          
          ; arrive here if this is a valid character
-C:000217 940e 00df                       call lcd_write_character_4d          ; display the character
-C:000219 e500                            ldi r16, 80                        ; 40 uS delay (min)
-C:00021a 940e 0118                       call delayTx1uS
-C:00021c cff7                            rjmp lcd_write_string_4d_mem_01          ; not done, send another character
+C:000219 940e 00df                       call lcd_write_character_4d          ; display the character
+C:00021b e500                            ldi r16, 80                        ; 40 uS delay (min)
+C:00021c 940e 0118                       call delayTx1uS
+C:00021e cff7                            rjmp lcd_write_string_4d_mem_01          ; not done, send another character
          
          ; arrive here when all characters in the message have been sent to the LCD module
           lcd_write_string_4d_mem_02:
-C:00021d 91af                          pop XL                              ; restore pointer registers
-C:00021e 91bf                        pop XH
-C:00021f 910f                      pop r16
-C:000220 9508                      ret
+C:00021f 91af                          pop XL                              ; restore pointer registers
+C:000220 91bf                        pop XH
+C:000221 910f                      pop r16
+C:000222 9508                      ret
 
 
 Segment usage:
-   Code      :       499 words (998 bytes)
+   Code      :       501 words (1002 bytes)
    Data      :        12 bytes
    EEPROM    :         0 bytes
 

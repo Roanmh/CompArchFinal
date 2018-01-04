@@ -811,9 +811,9 @@ delayTx1uS	L	0118	280
 delay1uS	L	011d	285
 RESET		L	0122	290
 wait_loop	L	015e	350
-colon_str	L	0205	517
-lcd_write_string_4d_mem	L	0206	518
-lcd_append_string_4d_mem	L	0211	529
-lcd_write_string_4d_mem_01	L	0214	532
-lcd_write_string_4d_mem_02	L	021d	541
+colon_str	L	0207	519
+lcd_write_string_4d_mem	L	0208	520
+lcd_append_string_4d_mem	L	0213	531
+lcd_write_string_4d_mem_01	L	0216	534
+lcd_write_string_4d_mem_02	L	021f	543
 
