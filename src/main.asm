@@ -101,69 +101,85 @@ hour_str:      .byte 3
   .org INT_VECTORS_SIZE         ; Start rest of code after Interupt Vectors
 
   ;; Timer Overflow Interupt
-  ;; .cseg                         ; This seems needed to avoid errors
-TIMER1_OVR:     cpbit temp_r16, pgm_sts, time_set, 0
-                brne TIMER1_OVR_END
-                incr_time tnth_sec_reg, sec_reg, min_reg, hour_reg
-                ori pgm_sts, (1 << dsp_upd)
+TIMER1_OVR:
+                push temp_r16
+                  lds temp_r16, 0x5F
+                  push temp_r16
+                    cpbit temp_r16, pgm_sts, time_set, 0
+                    brne TIMER1_OVR_END
+                    incr_time tnth_sec_reg, sec_reg, min_reg, hour_reg
+                    ori pgm_sts, (1 << dsp_upd)
+                  pop temp_r16
+                  sts 0x5F, temp_r16
+                pop temp_r16
 TIMER1_OVR_END: reti
 
   ;; ADC Conversion Complete Interupt
-ADC_INT:        lds adc_res, ADCH ; Load ADC Result High bit to register
+ADC_INT:
+                push temp_r16
+                  push temp_r17
+                    lds temp_r16, 0x5F
+                    push temp_r16
+                      lds adc_res, ADCH ; Load ADC Result High bit to register
 
-                cpi adc_res, 240 ; No button is pressed if adc_res is higher
-                brlo ADC_B1
-                andi pgm_sts, $FF - (1 << btn_prs) ; Clear button pressed state
-                reti            ; Take no action
+                      cpi adc_res, 240 ; No button is pressed if adc_res is higher
+                      brlo ADC_B1
+                      andi pgm_sts, $FF - (1 << btn_prs) ; Clear button pressed state
+                      jmp ADC_RET            ; Take no action
 
-ADC_B1:         cpbit temp_r16, pgm_sts, btn_prs, 0 ; Check for button pressed state
-                brne ADC_UPD_DISP
-                sei              ; Enable interupts because this is lower
-                                 ; priority than time keeping
-                cpi adc_res, 140 ; Button 1 is pressed if  adc_res is higher
-                brlo ADC_B2
+ADC_B1:               cpbit temp_r16, pgm_sts, btn_prs, 0 ; Check for button pressed state
+                      brne ADC_RET
+                      sei              ; Enable interupts because this is lower
+                                       ; priority than time keeping
+                      cpi adc_res, 140 ; Button 1 is pressed if  adc_res is higher
+                      brlo ADC_B2
 
-                ldi temp_r16, (1 << time_set) ; time_set[0]=0->1 or time_set[0]=1->0
-                eor pgm_sts, temp_r16
-                ori pgm_sts, (1 << btn_prs) + (1 << dsp_upd) ; Set button pressed state
-                jmp ADC_UPD_DISP
+                      ldi temp_r16, (1 << time_set) ; time_set[0]=0->1 or time_set[0]=1->0
+                      eor pgm_sts, temp_r16
+                      ori pgm_sts, (1 << btn_prs) + (1 << dsp_upd) ; Set button pressed state
+                      jmp ADC_RET
 
-ADC_B2:         cpi adc_res, 90 ; Button 2 is pressed if adc_res is higher
-                brlo ADC_B3
-                inc hour_reg
-                cpi hour_reg, 24
-                brlt ADC_B2_1
-                clr hour_reg
-ADC_B2_1:       ori pgm_sts, (1 << btn_prs)	+ (1 << dsp_upd) ; Set button pressed state
-                jmp ADC_UPD_DISP
+ADC_B2:               cpi adc_res, 90 ; Button 2 is pressed if adc_res is higher
+                      brlo ADC_B3
+                      inc hour_reg
+                      cpi hour_reg, 24
+                      brlt ADC_B2_1
+                      clr hour_reg
+ADC_B2_1:             ori pgm_sts, (1 << btn_prs)	+ (1 << dsp_upd) ; Set button pressed state
+                      jmp ADC_RET
 
-ADC_B3:         cpi adc_res, 55 ; Button 3 is pressed if adc_res is higher
-                brlo ADC_B4
-                inc min_reg
-                cpi min_reg, 60
-                brlt ADC_B3_1
-                clr min_reg
-ADC_B3_1:       ori pgm_sts, (1 << btn_prs)	+ (1 << dsp_upd) ; Set button pressed state
-                jmp ADC_UPD_DISP
+ADC_B3:               cpi adc_res, 55 ; Button 3 is pressed if adc_res is higher
+                      brlo ADC_B4
+                      inc min_reg
+                      cpi min_reg, 60
+                      brlt ADC_B3_1
+                      clr min_reg
+ADC_B3_1:             ori pgm_sts, (1 << btn_prs)	+ (1 << dsp_upd) ; Set button pressed state
+                      jmp ADC_RET
 
-ADC_B4:         cpi adc_res, 20 ; Button 3 is pressed if adc_res is higher
-                brlo ADC_B5
-                subi min_reg, -10
-                cpi min_reg, 60
-                brlt ADC_B4_1
-                subi min_reg, 60
-ADC_B4_1:       ori pgm_sts, (1 << btn_prs)	+ (1 << dsp_upd) ; Set button pressed state
-                jmp ADC_UPD_DISP
+ADC_B4:               cpi adc_res, 20 ; Button 3 is pressed if adc_res is higher
+                      brlo ADC_B5
+                      subi min_reg, -10
+                      cpi min_reg, 60
+                      brlt ADC_B4_1
+                      subi min_reg, 60
+ADC_B4_1:             ori pgm_sts, (1 << btn_prs)	+ (1 << dsp_upd) ; Set button pressed state
+                      jmp ADC_RET
 
-ADC_B5:         cpi sec_reg, 0
+ADC_B5:               cpi sec_reg, 0
 
-                breq ADC_B5_2
-                clr sec_reg
-                jmp ADC_B5_3
-ADC_B5_2:       ldi sec_reg, 30
-ADC_B5_3:       ori pgm_sts, (1 << btn_prs) + (1 << dsp_upd) ; Set button pressed state
+                      breq ADC_B5_2
+                      clr sec_reg
+                      jmp ADC_B5_3
+ADC_B5_2:             ldi sec_reg, 30
+ADC_B5_3:             ori pgm_sts, (1 << btn_prs) + (1 << dsp_upd) ; Set button pressed state
 
-ADC_UPD_DISP:   reti
+ADC_RET:
+                    pop temp_r16
+                    sts 0x5F, temp_r16
+                  pop temp_r17
+                pop temp_r16
+                reti
 
 
 ;;; Startup Routine
@@ -255,13 +271,10 @@ wait_loop:      cpbit temp_r16, pgm_sts, dsp_upd, 1
                 hex_to_dec_str_two_dig min_reg, min_str
                 hex_to_dec_str_two_dig hour_reg, hour_str
 
-                cli               ; This and the following sei keep the display commands from being interrupted
                 ldi temp_r16, $00           ; Set cursor to Begining of first line
                 ori temp_r16, lcd_SetCursor       ; convert the plain address to a set cursor instruction
                 call lcd_write_instruction_4d
-                sei
 
-                cli
                 disp_from_sram hour_str, clk_hr_loc ; Display each part of the clock
                 disp_from_pm colon_str, clk_cln1_loc
                 disp_from_sram min_str, clk_mn_loc
@@ -270,7 +283,6 @@ wait_loop:      cpbit temp_r16, pgm_sts, dsp_upd, 1
                 andi pgm_sts, $FF - (1 << dsp_upd) ; Clear display update needed
                 ldi temp_r16, 80
                 call delayTx1uS ; Must have an extra delay to avoid display glitches.
-                sei
                 jmp wait_loop
 
 ;;; Program Constants

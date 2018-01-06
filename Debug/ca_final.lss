@@ -1,20 +1,20 @@
 
-AVRASM ver. 2.2.7  C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm Thu Jan 04 17:32:07 2018
+AVRASM ver. 2.2.7  C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm Sat Jan 06 15:17:19 2018
 
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m328pdef.inc'
-C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm(14): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m328Pdef.inc'
-C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm(16): Including file '..\include\macros.inc'
-C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm(175): Including file '..\include\LCD-lib.asm'
+C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm(13): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m328Pdef.inc'
+C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm(15): Including file '..\include\macros.inc'
+C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm(182): Including file '..\include\LCD-lib.asm'
 ..\include\LCD-lib.asm(77): warning: .def: 'temp_r16' redefinition (r16->r16)
-C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm(175): '..\include\LCD-lib.asm' included form here
+C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm(182): '..\include\LCD-lib.asm' included form here
 ..\include\LCD-lib.asm(77): warning: Register r16 already defined by the .DEF directive
-C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm(175): '..\include\LCD-lib.asm' included form here
-C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm(284): Including file '..\include\timer_fxns.inc'
+C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm(182): '..\include\LCD-lib.asm' included form here
+C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm(293): Including file '..\include\timer_fxns.inc'
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m328pdef.inc'
-C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm(14): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m328Pdef.inc'
-C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm(16): Including file '..\include\macros.inc'
-C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm(175): Including file '..\include\LCD-lib.asm'
-C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm(284): Including file '..\include\timer_fxns.inc'
+C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm(13): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.2.150\avrasm\inc\m328Pdef.inc'
+C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm(15): Including file '..\include\macros.inc'
+C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm(182): Including file '..\include\LCD-lib.asm'
+C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\main.asm(293): Including file '..\include\timer_fxns.inc'
                                  
                                  ;- main.asm --------------------------------------------------------------------
                                  
@@ -1006,7 +1006,6 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\
                                  ;-------------------------------------------------------------------------------
                                  
                                  
-                                 
                                  ;;; Includes (Non-Function)
                                    .list
                                    .include "macros.inc"
@@ -1231,24 +1230,21 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\
                                  
                                  ;;; Definitions
                                    ;; Register Definitions
-                                   .def temp_r16     =r16            ; Included in LCD-lib.asm
+                                   .def temp_r16     = r16            ; Included in LCD-lib.asm
                                    .def temp_r17     = r17
                                    .def tnth_sec_reg = r18
                                    .def sec_reg      = r19
                                    .def min_reg      = r20
                                    .def hour_reg     = r21
                                    .def adc_res      = r22
-                                   ;; .def btn_prs      = r23
-                                   .def pgm_sts      = r24
+                                   .def pgm_sts      = r23
                                  
-                                 
-                                   ;; Contstant Definitions
-                                 
-                                   ;; Program Status Register
+                                  	;; Program Status Register
                                    .equ time_set = 0
                                    .equ btn_prs  = 1
                                    .equ dsp_upd  = 2
                                  
+                                   ;; Contstant Definitions
                                    ; Output Compare Register
                                    .equ ocr_low  = $FF
                                    .equ ocr_high = $5F
@@ -1306,20 +1302,20 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\
                                  ;;; Interupt Vectors
                                    .cseg
                                    .org 0x0000
-000000 940c 0122                                 jmp RESET        ; Reset Interupt Vecotor
+000000 940c 0126                                 jmp RESET        ; Reset Interupt Vecotor
                                    .org 0x0016
-000016 940c 0034                                 jmp TIMER1_OVR   ; Timer Output Compare Interupt
+000016 940c 0034                                 jmp TIMER1_OVR   ; Timer Output Compare Vector
                                    .org 0x002A
-00002a 940c 0052                                 jmp ADC_INT      ; ADC Conversion Complete Interrupt
+00002a 940c 0052                                 jmp ADC_INT      ; ADC Conversion Complete Vector
                                  
                                  
                                  
                                  ;;; Interupt Service Routines
-                                   .org INT_VECTORS_SIZE         ; Start Rest of code after Interupt Vectors
+                                   .org INT_VECTORS_SIZE         ; Start rest of code after Interupt Vectors
                                  
                                    ;; Timer Overflow Interupt
-                                   .cseg                         ; This seems needed to avoid errors
-000034 2f08
+                                   ;; .cseg                         ; This seems needed to avoid errors
+000034 2f07
 000035 7001
 000036 3000                      TIMER1_OVR:     cpbit temp_r16, pgm_sts, time_set, 0
 000037 f4c9                                      brne TIMER1_OVR_END
@@ -1343,67 +1339,78 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\
 00004c 9553
 00004d 940c 0050
 00004f 2755                                      incr_time tnth_sec_reg, sec_reg, min_reg, hour_reg
-000050 6084                                      ori pgm_sts, (1 << dsp_upd)
+000050 6074                                      ori pgm_sts, (1 << dsp_upd)
 000051 9518                      TIMER1_OVR_END: reti
                                  
                                    ;; ADC Conversion Complete Interupt
-000052 9160 0079                 ADC_INT:        lds adc_res, ADCH ; Load ADC Result High bit to register
+                                 ADC_INT:
+000052 930f                                      push temp_r16
+                                                 ;;   push temp_r17
+                                                     ;; lds temp_r16, 0x005F
+                                                     ;; push temp_r16
+000053 9160 0079                                       lds adc_res, ADCH ; Load ADC Result High bit to register
                                  
-000054 3f60                                      cpi adc_res, 240 ; No button is pressed if adc_res is higher
-000055 f010                                      brlo ADC_B1
-000056 7f8d                                      andi pgm_sts, $FF - (1 << btn_prs)
-000057 9518                                      reti            ; Take no action
+000055 3f60                                            cpi adc_res, 240 ; No button is pressed if adc_res is higher
+000056 f018                                            brlo ADC_B1
+000057 7f7d                                            andi pgm_sts, $FF - (1 << btn_prs) ; Clear button pressed state
+000058 940c 0088                                       jmp ADC_RET            ; Take no action
                                  
-000058 2f08
-000059 7002
-00005a 3000                      ADC_B1:         cpbit temp_r16, pgm_sts, btn_prs, 0
-00005b f551                                      brne ADC_UPD_DISP
-00005c 9478                                      sei              ; Enable interupts because this is lower
-                                                                  ; priority than time keeping
-00005d 386c                                      cpi adc_res, 140 ; Button 1 is pressed if  adc_res is higher
-00005e f028                                      brlo ADC_B2
+00005a 2f07
+00005b 7002
+00005c 3000                      ADC_B1:               cpbit temp_r16, pgm_sts, btn_prs, 0 ; Check for button pressed state
+00005d f551                                            brne ADC_RET
+00005e 9478                                            sei              ; Enable interupts because this is lower
+                                                                        ; priority than time keeping
+00005f 386c                                            cpi adc_res, 140 ; Button 1 is pressed if  adc_res is higher
+000060 f028                                            brlo ADC_B2
                                  
-00005f e001                                      ldi temp_r16, (1 << time_set) ; time_set[0]=0->1 or time_set[0]=1->0
-000060 2780                                      eor pgm_sts, temp_r16
-000061 6082                                      ori pgm_sts, (1 << btn_prs)
-000062 940c 0086                                 jmp ADC_UPD_DISP
+000061 e001                                            ldi temp_r16, (1 << time_set) ; time_set[0]=0->1 or time_set[0]=1->0
+000062 2770                                            eor pgm_sts, temp_r16
+000063 6076                                            ori pgm_sts, (1 << btn_prs) + (1 << dsp_upd) ; Set button pressed state
+000064 940c 0088                                       jmp ADC_RET
                                  
-000064 356a                      ADC_B2:         cpi adc_res, 90 ; Button 2 is pressed if  adc_res is higher
-000065 f038                                      brlo ADC_B3
-000066 9553                                      inc hour_reg
-000067 3158                                      cpi hour_reg, 24
-000068 f00c                                      brlt ADC_B2_1
-000069 2755                                      clr hour_reg
-00006a 6082                      ADC_B2_1:       ori pgm_sts, (1 << btn_prs)
-00006b 940c 0086                                 jmp ADC_UPD_DISP
+000066 356a                      ADC_B2:               cpi adc_res, 90 ; Button 2 is pressed if adc_res is higher
+000067 f038                                            brlo ADC_B3
+000068 9553                                            inc hour_reg
+000069 3158                                            cpi hour_reg, 24
+00006a f00c                                            brlt ADC_B2_1
+00006b 2755                                            clr hour_reg
+00006c 6076                      ADC_B2_1:             ori pgm_sts, (1 << btn_prs)	+ (1 << dsp_upd) ; Set button pressed state
+00006d 940c 0088                                       jmp ADC_RET
                                  
-00006d 3367                      ADC_B3:         cpi adc_res, 55 ; Button 3 is pressed if  adc_res is higher
-00006e f038                                      brlo ADC_B4
-00006f 9543                                      inc min_reg
-000070 334c                                      cpi min_reg, 60
-000071 f00c                                      brlt ADC_B3_1
-000072 2744                                      clr min_reg
-000073 6082                      ADC_B3_1:       ori pgm_sts, (1 << btn_prs)
-000074 940c 0086                                 jmp ADC_UPD_DISP
+00006f 3367                      ADC_B3:               cpi adc_res, 55 ; Button 3 is pressed if adc_res is higher
+000070 f038                                            brlo ADC_B4
+000071 9543                                            inc min_reg
+000072 334c                                            cpi min_reg, 60
+000073 f00c                                            brlt ADC_B3_1
+000074 2744                                            clr min_reg
+000075 6076                      ADC_B3_1:             ori pgm_sts, (1 << btn_prs)	+ (1 << dsp_upd) ; Set button pressed state
+000076 940c 0088                                       jmp ADC_RET
                                  
-000076 3164                      ADC_B4:         cpi adc_res, 20 ; Button 3 is pressed if  adc_res is higher
-000077 f038                                      brlo ADC_B5
-000078 5f46                                      subi min_reg, -10
-000079 334c                                      cpi min_reg, 60
-00007a f00c                                      brlt ADC_B4_1
-00007b 534c                                      subi min_reg, 60
-00007c 6082                      ADC_B4_1:       ori pgm_sts, (1 << btn_prs)
-00007d 940c 0086                                 jmp ADC_UPD_DISP
+000078 3164                      ADC_B4:               cpi adc_res, 20 ; Button 3 is pressed if adc_res is higher
+000079 f038                                            brlo ADC_B5
+00007a 5f46                                            subi min_reg, -10
+00007b 334c                                            cpi min_reg, 60
+00007c f00c                                            brlt ADC_B4_1
+00007d 534c                                            subi min_reg, 60
+00007e 6076                      ADC_B4_1:             ori pgm_sts, (1 << btn_prs)	+ (1 << dsp_upd) ; Set button pressed state
+00007f 940c 0088                                       jmp ADC_RET
                                  
-00007f 3030                      ADC_B5:         cpi sec_reg, 0
+000081 3030                      ADC_B5:               cpi sec_reg, 0
                                  
-000080 f019                                      breq ADC_B5_2
-000081 2733                                      clr sec_reg
-000082 940c 0085                                 jmp ADC_B5_3
-000084 e13e                      ADC_B5_2:       ldi sec_reg, 30
-000085 6082                      ADC_B5_3:       ori pgm_sts, (1 << btn_prs)
+000082 f019                                            breq ADC_B5_2
+000083 2733                                            clr sec_reg
+000084 940c 0087                                       jmp ADC_B5_3
+000086 e13e                      ADC_B5_2:             ldi sec_reg, 30
+000087 6076                      ADC_B5_3:             ori pgm_sts, (1 << btn_prs) + (1 << dsp_upd) ; Set button pressed state
                                  
-000086 9518                      ADC_UPD_DISP:   reti
+                                 ADC_RET:
+000088 94f8                                            cli
+                                                     ;; pop temp_r16
+                                                     ;; sts 0x005F, temp_r16
+                                                 ;;   pop temp_r17
+000089 910f                                      pop temp_r16
+00008a 9518                                      reti
                                  
                                  
                                  ;;; Startup Routine
@@ -1540,8 +1547,8 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\
                                  
                                  lcd_init_4d:
                                  ; Power-up delay
-000087 e604                          ldi     temp_r16, 100                       ; initial 40 mSec delay
-000088 940e 010a                     call    delayTx1mS
+00008b e604                          ldi     temp_r16, 100                       ; initial 40 mSec delay
+00008c 940e 010e                     call    delayTx1mS
                                  
                                  ; IMPORTANT - At this point the LCD module is in the 8-bit mode and it is expecting to receive  
                                  ;    8 bits of data, one bit on each of its 8 data lines, each time the 'E' line is pulsed.
@@ -1557,81 +1564,81 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\
                                  ;    control lines have previously been configured properly.
                                  
                                  ; configure the microprocessor pins for the data lines
-00008a 9a57                          sbi     lcd_D7_ddr, lcd_D7_bit          ; 4 data lines - output
-00008b 9a56                          sbi     lcd_D6_ddr, lcd_D6_bit
-00008c 9a55                          sbi     lcd_D5_ddr, lcd_D5_bit
-00008d 9a54                          sbi     lcd_D4_ddr, lcd_D4_bit
+00008e 9a57                          sbi     lcd_D7_ddr, lcd_D7_bit          ; 4 data lines - output
+00008f 9a56                          sbi     lcd_D6_ddr, lcd_D6_bit
+000090 9a55                          sbi     lcd_D5_ddr, lcd_D5_bit
+000091 9a54                          sbi     lcd_D4_ddr, lcd_D4_bit
                                  
                                  ; configure the microprocessor pins for the control lines
-00008e 9a21                          sbi     lcd_E_ddr,  lcd_E_bit           ; E line - output
-00008f 9a20                          sbi     lcd_RS_ddr, lcd_RS_bit          ; RS line - output
+000092 9a21                          sbi     lcd_E_ddr,  lcd_E_bit           ; E line - output
+000093 9a20                          sbi     lcd_RS_ddr, lcd_RS_bit          ; RS line - output
                                  
                                  ; Set up the RS and E lines for the 'lcd_write_4' subroutine.
-000090 9828                          cbi     lcd_RS_port, lcd_RS_bit         ; select the Instruction Register (RS low)
-000091 9829                          cbi     lcd_E_port, lcd_E_bit           ; make sure E is initially low
+000094 9828                          cbi     lcd_RS_port, lcd_RS_bit         ; select the Instruction Register (RS low)
+000095 9829                          cbi     lcd_E_port, lcd_E_bit           ; make sure E is initially low
                                  
                                  ; Reset the LCD controller.
-000092 e300                          ldi     temp_r16, lcd_FunctionReset         ; first part of reset sequence
-000093 940e 00f2                     call    lcd_write_4
-000095 e00a                          ldi     temp_r16, 10                        ; 4.1 mS delay (min)
-000096 940e 010a                     call    delayTx1mS
+000096 e300                          ldi     temp_r16, lcd_FunctionReset         ; first part of reset sequence
+000097 940e 00f6                     call    lcd_write_4
+000099 e00a                          ldi     temp_r16, 10                        ; 4.1 mS delay (min)
+00009a 940e 010e                     call    delayTx1mS
                                  
-000098 e300                          ldi     temp_r16, lcd_FunctionReset         ; second part of reset sequence
-000099 940e 00f2                     call    lcd_write_4
-00009b ec08                          ldi     temp_r16, 200                       ; 100 uS delay (min)
-00009c 940e 0118                     call    delayTx1uS
+00009c e300                          ldi     temp_r16, lcd_FunctionReset         ; second part of reset sequence
+00009d 940e 00f6                     call    lcd_write_4
+00009f ec08                          ldi     temp_r16, 200                       ; 100 uS delay (min)
+0000a0 940e 011c                     call    delayTx1uS
                                  
-00009e e300                          ldi     temp_r16, lcd_FunctionReset         ; third part of reset sequence
-00009f 940e 00f2                     call    lcd_write_4
-0000a1 ec08                          ldi     temp_r16, 200                       ; this delay is omitted in the data sheet
-0000a2 940e 0118                     call    delayTx1uS
+0000a2 e300                          ldi     temp_r16, lcd_FunctionReset         ; third part of reset sequence
+0000a3 940e 00f6                     call    lcd_write_4
+0000a5 ec08                          ldi     temp_r16, 200                       ; this delay is omitted in the data sheet
+0000a6 940e 011c                     call    delayTx1uS
                                  
                                  ; Preliminary Function Set instruction - used only to set the 4-bit mode.
                                  ; The number of lines or the font cannot be set at this time since the controller is still in the 
                                  ;   8-bit mode, but the data transfer mode can be changed since this parameter is determined by one 
                                  ;   of the upper four bits of the instruction.
-0000a4 e208                          ldi     temp_r16, lcd_FunctionSet4bit       ; set 4-bit mode
-0000a5 940e 00f2                     call    lcd_write_4
-0000a7 e500                          ldi     temp_r16, 80                        ; 40 uS delay (min)
-0000a8 940e 0118                     call    delayTx1uS
+0000a8 e208                          ldi     temp_r16, lcd_FunctionSet4bit       ; set 4-bit mode
+0000a9 940e 00f6                     call    lcd_write_4
+0000ab e500                          ldi     temp_r16, 80                        ; 40 uS delay (min)
+0000ac 940e 011c                     call    delayTx1uS
                                  
                                  ; Function Set instruction
-0000aa e208                          ldi     temp_r16, lcd_FunctionSet4bit       ; set mode, lines, and font
-0000ab 940e 00e7                     call    lcd_write_instruction_4d
-0000ad e500                          ldi     temp_r16, 80                        ; 40 uS delay (min)
-0000ae 940e 0118                     call    delayTx1uS
+0000ae e208                          ldi     temp_r16, lcd_FunctionSet4bit       ; set mode, lines, and font
+0000af 940e 00eb                     call    lcd_write_instruction_4d
+0000b1 e500                          ldi     temp_r16, 80                        ; 40 uS delay (min)
+0000b2 940e 011c                     call    delayTx1uS
                                  
                                  ; The next three instructions are specified in the data sheet as part of the initialization routine,
                                  ;   so it is a good idea (but probably not necessary) to do them just as specified and then redo them
                                  ;   later if the application requires a different configuration.
                                  
                                  ; Display On/Off Control instruction
-0000b0 e008                          ldi     temp_r16, lcd_DisplayOff            ; turn display OFF
-0000b1 940e 00e7                     call    lcd_write_instruction_4d
-0000b3 e500                          ldi     temp_r16, 80                        ; 40 uS delay (min)
-0000b4 940e 0118                     call    delayTx1uS
+0000b4 e008                          ldi     temp_r16, lcd_DisplayOff            ; turn display OFF
+0000b5 940e 00eb                     call    lcd_write_instruction_4d
+0000b7 e500                          ldi     temp_r16, 80                        ; 40 uS delay (min)
+0000b8 940e 011c                     call    delayTx1uS
                                  
                                  ; Clear Display instruction
-0000b6 e001                          ldi     temp_r16, lcd_Clear                 ; clear display RAM
-0000b7 940e 00e7                     call    lcd_write_instruction_4d
-0000b9 e004                          ldi     temp_r16, 4                         ; 1.64 mS delay (min)
-0000ba 940e 010a                     call    delayTx1mS
+0000ba e001                          ldi     temp_r16, lcd_Clear                 ; clear display RAM
+0000bb 940e 00eb                     call    lcd_write_instruction_4d
+0000bd e004                          ldi     temp_r16, 4                         ; 1.64 mS delay (min)
+0000be 940e 010e                     call    delayTx1mS
                                  
                                  ; Entry Mode Set instruction
-0000bc e006                          ldi     temp_r16, lcd_EntryMode             ; set desired shift characteristics
-0000bd 940e 00e7                     call    lcd_write_instruction_4d
-0000bf e500                          ldi     temp_r16, 80                        ; 40 uS delay (min)
-0000c0 940e 0118                     call    delayTx1uS
+0000c0 e006                          ldi     temp_r16, lcd_EntryMode             ; set desired shift characteristics
+0000c1 940e 00eb                     call    lcd_write_instruction_4d
+0000c3 e500                          ldi     temp_r16, 80                        ; 40 uS delay (min)
+0000c4 940e 011c                     call    delayTx1uS
                                  
                                  ; This is the end of the LCD controller initialization as specified in the data sheet, but the display
                                  ;   has been left in the OFF condition.  This is a good time to turn the display back ON.
                                  
                                  ; Display On/Off Control instruction
-0000c2 e00c                          ldi     temp_r16, lcd_DisplayOn             ; turn the display ON
-0000c3 940e 00e7                     call    lcd_write_instruction_4d
-0000c5 e500                          ldi     temp_r16, 80                        ; 40 uS delay (min)
-0000c6 940e 0118                     call    delayTx1uS
-0000c8 9508                          ret
+0000c6 e00c                          ldi     temp_r16, lcd_DisplayOn             ; turn the display ON
+0000c7 940e 00eb                     call    lcd_write_instruction_4d
+0000c9 e500                          ldi     temp_r16, 80                        ; 40 uS delay (min)
+0000ca 940e 011c                     call    delayTx1uS
+0000cc 9508                          ret
                                  
                                  
                                  
@@ -1652,36 +1659,36 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\
                                  
                                  lcd_write_string_4d:
                                  ; preserve registers
-0000c9 93ff                          push    ZH                              ; preserve pointer registers
-0000ca 93ef                          push    ZL
+0000cd 93ff                          push    ZH                              ; preserve pointer registers
+0000ce 93ef                          push    ZL
                                  
                                  ; fix up the pointers for use with the 'lpm' instruction
-0000cb 0fee                          lsl     ZL                              ; shift the pointer one bit left for the lpm instruction
-0000cc 1fff                          rol     ZH
+0000cf 0fee                          lsl     ZL                              ; shift the pointer one bit left for the lpm instruction
+0000d0 1fff                          rol     ZH
                                  
                                  ; set up the initial DDRAM address
-0000cd 6800                          ori     temp_r16, lcd_SetCursor     ; convert the plain address to a set cursor instruction
-0000ce 940e 00e7                     call   lcd_write_instruction_4d     ; set up the first DDRAM address
-0000d0 e500                          ldi     temp_r16, 80                ; 40 uS delay (min)
-0000d1 940e 0118                     call    delayTx1uS
+0000d1 6800                          ori     temp_r16, lcd_SetCursor     ; convert the plain address to a set cursor instruction
+0000d2 940e 00eb                     call   lcd_write_instruction_4d     ; set up the first DDRAM address
+0000d4 e500                          ldi     temp_r16, 80                ; 40 uS delay (min)
+0000d5 940e 011c                     call    delayTx1uS
                                  
                                  ; write the string of characters
                                  lcd_write_string_4d_01:
-0000d3 9105                          lpm     temp_r16, Z+                        ; get a character
-0000d4 3000                          cpi     temp_r16,  0                        ; check for end of string
-0000d5 f031                          breq    lcd_write_string_4d_02          ; done
+0000d7 9105                          lpm     temp_r16, Z+                        ; get a character
+0000d8 3000                          cpi     temp_r16,  0                        ; check for end of string
+0000d9 f031                          breq    lcd_write_string_4d_02          ; done
                                  
                                  ; arrive here if this is a valid character
-0000d6 940e 00df                     call    lcd_write_character_4d          ; display the character
-0000d8 e500                          ldi     temp_r16, 80                        ; 40 uS delay (min)
-0000d9 940e 0118                     call    delayTx1uS
-0000db cff7                          rjmp    lcd_write_string_4d_01          ; not done, send another character
+0000da 940e 00e3                     call    lcd_write_character_4d          ; display the character
+0000dc e500                          ldi     temp_r16, 80                        ; 40 uS delay (min)
+0000dd 940e 011c                     call    delayTx1uS
+0000df cff7                          rjmp    lcd_write_string_4d_01          ; not done, send another character
                                  
                                  ; arrive here when all characters in the message have been sent to the LCD module
                                  lcd_write_string_4d_02:
-0000dc 91ef                          pop     ZL                              ; restore pointer registers
-0000dd 91ff                          pop     ZH
-0000de 9508                          ret
+0000e0 91ef                          pop     ZL                              ; restore pointer registers
+0000e1 91ff                          pop     ZH
+0000e2 9508                          ret
                                  
                                  ; ---------------------------------------------------------------------------
                                  ; Name:     lcd_write_character_4d
@@ -1691,12 +1698,12 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\
                                  ; Notes:    does not deal with RW (busy flag is not implemented)
                                  
                                  lcd_write_character_4d:
-0000df 9a28                          sbi     lcd_RS_port, lcd_RS_bit         ; select the Data Register (RS high)
-0000e0 9829                          cbi     lcd_E_port, lcd_E_bit           ; make sure E is initially low
-0000e1 940e 00f2                     call    lcd_write_4                     ; write the upper 4-bits of the data
-0000e3 9502                          swap    temp_r16                        ; swap high and low nibbles
-0000e4 940e 00f2                     call    lcd_write_4                     ; write the lower 4-bits of the data
-0000e6 9508                          ret
+0000e3 9a28                          sbi     lcd_RS_port, lcd_RS_bit         ; select the Data Register (RS high)
+0000e4 9829                          cbi     lcd_E_port, lcd_E_bit           ; make sure E is initially low
+0000e5 940e 00f6                     call    lcd_write_4                     ; write the upper 4-bits of the data
+0000e7 9502                          swap    temp_r16                        ; swap high and low nibbles
+0000e8 940e 00f6                     call    lcd_write_4                     ; write the lower 4-bits of the data
+0000ea 9508                          ret
                                  
                                  ; ---------------------------------------------------------------------------
                                  ; Name:     lcd_write_instruction_4d
@@ -1706,14 +1713,14 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\
                                  ; Notes:    does not deal with RW (busy flag is not implemented)
                                  
                                  lcd_write_instruction_4d:
-0000e7 9828                          cbi     lcd_RS_port, lcd_RS_bit ; select the Instruction Register (RS low)
-0000e8 9829                          cbi     lcd_E_port, lcd_E_bit   ; make sure E is initially low
-0000e9 940e 00f2                     call    lcd_write_4             ; write the upper 4-bits of the instruction
-0000eb 9502                          swap    temp_r16                ; swap high and low nibbles
-0000ec 940e 00f2                     call    lcd_write_4             ; write the lower 4-bits of the instruction
-0000ee e004                          ldi     temp_r16, 4                  ; 1.64 mS delay (min)
-0000ef 940e 010a                     call    delayTx1mS              ;
-0000f1 9508                          ret
+0000eb 9828                          cbi     lcd_RS_port, lcd_RS_bit ; select the Instruction Register (RS low)
+0000ec 9829                          cbi     lcd_E_port, lcd_E_bit   ; make sure E is initially low
+0000ed 940e 00f6                     call    lcd_write_4             ; write the upper 4-bits of the instruction
+0000ef 9502                          swap    temp_r16                ; swap high and low nibbles
+0000f0 940e 00f6                     call    lcd_write_4             ; write the lower 4-bits of the instruction
+0000f2 e004                          ldi     temp_r16, 4                  ; 1.64 mS delay (min)
+0000f3 940e 010e                     call    delayTx1mS              ;
+0000f5 9508                          ret
                                  
                                  ; ---------------------------------------------------------------------------
                                  ; Name:     lcd_write_4
@@ -1727,32 +1734,32 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\
                                  
                                  lcd_write_4:
                                  ; set up D7
-0000f2 9a5f                          sbi     lcd_D7_port, lcd_D7_bit         ; assume that the D7 data is '1'
-0000f3 ff07                          sbrs    temp_r16, 7                         ; check the actual data value
-0000f4 985f                          cbi     lcd_D7_port, lcd_D7_bit         ; arrive here only if the data was actually '0'
+0000f6 9a5f                          sbi     lcd_D7_port, lcd_D7_bit         ; assume that the D7 data is '1'
+0000f7 ff07                          sbrs    temp_r16, 7                         ; check the actual data value
+0000f8 985f                          cbi     lcd_D7_port, lcd_D7_bit         ; arrive here only if the data was actually '0'
                                  
                                  ; set up D6
-0000f5 9a5e                          sbi     lcd_D6_port, lcd_D6_bit         ; repeat for each data bit
-0000f6 ff06                          sbrs    temp_r16, 6
-0000f7 985e                          cbi     lcd_D6_port, lcd_D6_bit
+0000f9 9a5e                          sbi     lcd_D6_port, lcd_D6_bit         ; repeat for each data bit
+0000fa ff06                          sbrs    temp_r16, 6
+0000fb 985e                          cbi     lcd_D6_port, lcd_D6_bit
                                  
                                  ; set up D5
-0000f8 9a5d                          sbi     lcd_D5_port, lcd_D5_bit
-0000f9 ff05                          sbrs    temp_r16, 5
-0000fa 985d                          cbi     lcd_D5_port, lcd_D5_bit
+0000fc 9a5d                          sbi     lcd_D5_port, lcd_D5_bit
+0000fd ff05                          sbrs    temp_r16, 5
+0000fe 985d                          cbi     lcd_D5_port, lcd_D5_bit
                                  
                                  ; set up D4
-0000fb 9a5c                          sbi     lcd_D4_port, lcd_D4_bit
-0000fc ff04                          sbrs    temp_r16, 4 
-0000fd 985c                          cbi     lcd_D4_port, lcd_D4_bit
+0000ff 9a5c                          sbi     lcd_D4_port, lcd_D4_bit
+000100 ff04                          sbrs    temp_r16, 4 
+000101 985c                          cbi     lcd_D4_port, lcd_D4_bit
                                  
                                  ; write the data
                                                                              ; 'Address set-up time' (40 nS)
-0000fe 9a29                          sbi     lcd_E_port, lcd_E_bit           ; Enable pin high
-0000ff 940e 011d                     call    delay1uS                        ; implement 'Data set-up time' (80 nS) and 'Enable pulse width' (230 nS)
-000101 9829                          cbi     lcd_E_port, lcd_E_bit           ; Enable pin low
-000102 940e 011d                     call    delay1uS                        ; implement 'Data hold time' (10 nS) and 'Enable cycle time' (500 nS)
-000104 9508                          ret
+000102 9a29                          sbi     lcd_E_port, lcd_E_bit           ; Enable pin high
+000103 940e 0121                     call    delay1uS                        ; implement 'Data set-up time' (80 nS) and 'Enable pulse width' (230 nS)
+000105 9829                          cbi     lcd_E_port, lcd_E_bit           ; Enable pin low
+000106 940e 0121                     call    delay1uS                        ; implement 'Data hold time' (10 nS) and 'Enable cycle time' (500 nS)
+000108 9508                          ret
                                  
                                  ; ============================== End of 4-bit LCD Subroutines ===============
                                  
@@ -1765,12 +1772,12 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\
                                  ;           requires delay1mS
                                  
                                  delayYx1mS:
-000105 940e 010f                     call    delay1mS                        ; delay for 1 mS
-000107 9721                          sbiw    YH:YL, 1                        ; update the the delay counter
-000108 f7e1                          brne    delayYx1mS                      ; counter is not zero
+000109 940e 0113                     call    delay1mS                        ; delay for 1 mS
+00010b 9721                          sbiw    YH:YL, 1                        ; update the the delay counter
+00010c f7e1                          brne    delayYx1mS                      ; counter is not zero
                                  
                                  ; arrive here when delay counter is zero (total delay period is finished)
-000109 9508                          ret
+00010d 9508                          ret
                                  
                                  ; ---------------------------------------------------------------------------
                                  ; Name:     delayTx1mS
@@ -1781,12 +1788,12 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\
                                  ;           requires delay1mS
                                  
                                  delayTx1mS:
-00010a 940e 010f                     call    delay1mS        ; delay for 1 mS
-00010c 950a                          dec     temp_r16        ; update the delay counter
-00010d f7e1                          brne    delayTx1mS      ; counter is not zero
+00010e 940e 0113                     call    delay1mS        ; delay for 1 mS
+000110 950a                          dec     temp_r16        ; update the delay counter
+000111 f7e1                          brne    delayTx1mS      ; counter is not zero
                                  
                                  ; arrive here when delay counter is zero (total delay period is finished)
-00010e 9508                          ret
+000112 9508                          ret
                                  
                                  ; ---------------------------------------------------------------------------
                                  ; Name:     delay1mS
@@ -1796,19 +1803,19 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\
                                  ; Notes:    chews up fclk/1000 clock cycles (including the 'call')
                                  
                                  delay1mS:
-00010f 93cf                          push    YL                              ; [2] preserve registers
-000110 93df                          push    YH                              ; [2]
-000111 e9cb                          ldi     YL, low (((fclk/1000)-18)/4)    ; [1] delay counter
-000112 e0df                          ldi     YH, high(((fclk/1000)-18)/4)    ; [1]
+000113 93cf                          push    YL                              ; [2] preserve registers
+000114 93df                          push    YH                              ; [2]
+000115 e9cb                          ldi     YL, low (((fclk/1000)-18)/4)    ; [1] delay counter
+000116 e0df                          ldi     YH, high(((fclk/1000)-18)/4)    ; [1]
                                  
                                  delay1mS_01:
-000113 9721                          sbiw    YH:YL, 1                        ; [2] update the the delay counter
-000114 f7f1                          brne    delay1mS_01                     ; [2] delay counter is not zero
+000117 9721                          sbiw    YH:YL, 1                        ; [2] update the the delay counter
+000118 f7f1                          brne    delay1mS_01                     ; [2] delay counter is not zero
                                  
                                  ; arrive here when delay counter is zero
-000115 91df                          pop     YH                              ; [2] restore registers
-000116 91cf                          pop     YL                              ; [2]
-000117 9508                          ret                                     ; [4]
+000119 91df                          pop     YH                              ; [2] restore registers
+00011a 91cf                          pop     YL                              ; [2]
+00011b 9508                          ret                                     ; [4]
                                  
                                  ; ---------------------------------------------------------------------------
                                  ; Name:     delayTx1uS
@@ -1819,12 +1826,12 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\
                                  ;           requires delay1uS
                                  
                                  delayTx1uS:
-000118 940e 011d                     call    delay1uS                        ; delay for 1 uS
-00011a 950a                          dec     temp_r16                        ; decrement the delay counter
-00011b f7e1                          brne    delayTx1uS                      ; counter is not zero
+00011c 940e 0121                     call    delay1uS                        ; delay for 1 uS
+00011e 950a                          dec     temp_r16                        ; decrement the delay counter
+00011f f7e1                          brne    delayTx1uS                      ; counter is not zero
                                  
                                  ; arrive here when delay counter is zero (total delay period is finished)
-00011c 9508                          ret
+000120 9508                          ret
                                  
                                  ; ---------------------------------------------------------------------------
                                  ; Name:     delay1uS
@@ -1834,255 +1841,257 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\
                                  ; Notes:    add another push/pop for 20 MHz clock frequency
                                  
                                  delay1uS:
-00011d 930f                          push    temp_r16                            ; [2] these instructions do nothing except consume clock cycles
-00011e 910f                          pop     temp_r16                            ; [2]
-00011f 930f                          push    temp_r16                            ; [2]
-000120 910f                          pop     temp_r16                            ; [2]
-000121 9508                          ret                                     ; [4]
+000121 930f                          push    temp_r16                            ; [2] these instructions do nothing except consume clock cycles
+000122 910f                          pop     temp_r16                            ; [2]
+000123 930f                          push    temp_r16                            ; [2]
+000124 910f                          pop     temp_r16                            ; [2]
+000125 9508                          ret                                     ; [4]
                                  
                                  ; ============================== End of Time Delay Subroutines ==============
-000122 ef0f
-000123 bf0d
-000124 e008
-000125 bf0e                      RESET:          init_sp         ; Initialize the Stack Pointer
+000126 ef0f
+000127 bf0d
+000128 e008
+000129 bf0e                      RESET:          init_sp         ; Initialize the Stack Pointer
                                  
                                    ;; Timer Setup
                                    ;;  -Control Registers
-000126 e000                                      ldi temp_r16, t16wgm_lo
-000127 9300 0080                                 sts TCCR1A, temp_r16
+00012a e000                                      ldi temp_r16, t16wgm_lo
+00012b 9300 0080                                 sts TCCR1A, temp_r16
                                  
-000129 e003                                      ldi temp_r16, t16cs         ; Clock Source (Curr: x1 Prescale)
-00012a 6008                                      ori temp_r16, t16wgm_hi
-00012b 9300 0081                                 sts TCCR1B, temp_r16
+00012d e003                                      ldi temp_r16, t16cs         ; Clock Source (Curr: x1 Prescale)
+00012e 6008                                      ori temp_r16, t16wgm_hi
+00012f 9300 0081                                 sts TCCR1B, temp_r16
                                  
-00012d e000                                      ldi temp_r16, $00 ; TODO: Add constant for this
-00012e 9300 0082                                 sts TCCR1C, temp_r16
+000131 e000                                      ldi temp_r16, $00 ; TODO: Add constant for this
+000132 9300 0082                                 sts TCCR1C, temp_r16
                                  
                                    ;;  -Output Compare Registers
-000130 e51f                                      ldi temp_r17, ocr_high
-000131 ef0f                                      ldi temp_r16, ocr_low
-000132 9310 0089                                 sts OCR1AH, temp_r17
-000134 9300 0088                                 sts OCR1AL, temp_r16
+000134 e51f                                      ldi temp_r17, ocr_high
+000135 ef0f                                      ldi temp_r16, ocr_low
+000136 9310 0089                                 sts OCR1AH, temp_r17
+000138 9300 0088                                 sts OCR1AL, temp_r16
                                  
                                    ;;  -Interupt Mask
-000136 e002                                      ldi temp_r16, t16im
-000137 9300 006f                                 sts TIMSK1, temp_r16
+00013a e002                                      ldi temp_r16, t16im
+00013b 9300 006f                                 sts TIMSK1, temp_r16
                                  
                                    ;; Power Reduction Register
-000139 7f0e                                      andi temp_r16, prr_startup
-00013a 9300 0064                                 sts PRR, temp_r16
+00013d 7f0e                                      andi temp_r16, prr_startup
+00013e 9300 0064                                 sts PRR, temp_r16
                                  
                                    ;; ADC Multiplexer Selection Register
-00013c e600                                      ldi temp_r16, adc_mul_sel
-00013d 9300 007c                                 sts ADMUX, temp_r16
+000140 e600                                      ldi temp_r16, adc_mul_sel
+000141 9300 007c                                 sts ADMUX, temp_r16
                                  
                                    ;; Digital Input Disable Register
-00013f e001                                      ldi temp_r16, di_dis_startup
-000140 9300 007e                                 sts DIDR0, temp_r16
+000143 e001                                      ldi temp_r16, di_dis_startup
+000144 9300 007e                                 sts DIDR0, temp_r16
                                  
                                    ;; External Interrupt Control Register A
-000142 e003                                      ldi temp_r16, ext_int_ctrl_a
-000143 9300 0069                                 sts EICRA,temp_r16
+000146 e003                                      ldi temp_r16, ext_int_ctrl_a
+000147 9300 0069                                 sts EICRA,temp_r16
                                  
                                    ;; External Interrupt Mask Register
-000145 e000                                      ldi temp_r16, ext_int_msk
-000146 9300 001d                                 sts EIMSK, temp_r16
+000149 e000                                      ldi temp_r16, ext_int_msk
+00014a 9300 001d                                 sts EIMSK, temp_r16
                                  
                                    ;; ADC Control and Status Register A
-000148 ee0f                                      ldi temp_r16, adc_ctrl_a
-000149 9300 007a                                 sts ADCSRA, temp_r16
+00014c ee0f                                      ldi temp_r16, adc_ctrl_a
+00014d 9300 007a                                 sts ADCSRA, temp_r16
                                  
                                    ;; ADC Control and Status Register B
-00014b e000                                      ldi temp_r16, adc_ctrl_b
-00014c 9300 007b                                 sts ADCSRB, temp_r16
+00014f e000                                      ldi temp_r16, adc_ctrl_b
+000150 9300 007b                                 sts ADCSRB, temp_r16
                                  
                                  
-00014e 940e 0087                                 call lcd_init_4d              ; Initialize LCD display for 4-bit interface
+000152 940e 008b                                 call lcd_init_4d              ; Initialize LCD display for 4-bit interface
                                  
                                    ;; Clear Display Instruction
-000150 e001                                      ldi temp_r16, lcd_Clear       ; r16 = clear display instruction
-000151 940e 00e7                                 call lcd_write_instruction_4d
+000154 e001                                      ldi temp_r16, lcd_Clear       ; r16 = clear display instruction
+000155 940e 00eb                                 call lcd_write_instruction_4d
                                  
                                  
                                    ;; Initialize Registers
-000153 2722                                      clr tnth_sec_reg
-000154 2733                                      clr sec_reg
-000155 2744                                      clr min_reg
-000156 2755                                      clr hour_reg
-000157 2766                                      clr adc_res
+000157 2722                                      clr tnth_sec_reg
+000158 2733                                      clr sec_reg
+000159 2744                                      clr min_reg
+00015a 2755                                      clr hour_reg
+00015b 2766                                      clr adc_res
                                                  ;clr pgm_sts
-000158 e084                                      ldi pgm_sts, (1 << dsp_upd)
+00015c e074                                      ldi pgm_sts, (1 << dsp_upd)
                                  
                                    ;; Global Interupt Enable
-000159 9478                                      sei
+00015d 9478                                      sei
                                  
                                    ;; Intialization of port for proper analog input
-00015a ef0e                                      ldi temp_r16, 0b11111110
-00015b b907                                      out DDRC,temp_r16 ; set PortC to output, ADC0 input
-00015c 2700                                      clr temp_r16
-00015d b908                                      out PortC,temp_r16 ; set PortC to 0V
+00015e ef0e                                      ldi temp_r16, 0b11111110
+00015f b907                                      out DDRC,temp_r16 ; set PortC to output, ADC0 input
+000160 2700                                      clr temp_r16
+000161 b908                                      out PortC,temp_r16 ; set PortC to 0V
                                  
                                    ;; Waiting Loop
-00015e 2f08
-00015f 7004
-000160 3004                      wait_loop:      cpbit temp_r16, pgm_sts, dsp_upd, 1
-000161 f7e1                                      brne wait_loop
+000162 2f07
+000163 7004
+000164 3004                      wait_loop:      cpbit temp_r16, pgm_sts, dsp_upd, 1
+000165 f7e1                                      brne wait_loop
                                  
-000162 933f
-000163 930f
-000164 931f
-000165 3634
-000166 f464
-000167 e01a
-000168 2700
-000169 1731
-00016a f024
-00016b 9503
-00016c 1b31
-00016d 940c 0169
-00016f 5d00
-000170 5d30
-000171 940c 0175
-000173 e213
-000174 e203
-000175 93af
-000176 93bf
-000177 e0b1
-000178 e0a3
-000179 930d
-00017a 933d
-00017b 2711
-00017c 931c
-00017d 91bf
-00017e 91af
-00017f 911f
-000180 910f
-000181 913f                                      hex_to_dec_str_two_dig sec_reg, sec_str ; Convert and store time values
-000182 934f
-000183 930f
-000184 931f
-000185 3644
-000186 f464
-000187 e01a
-000188 2700
-000189 1741
-00018a f024
-00018b 9503
-00018c 1b41
-00018d 940c 0189
-00018f 5d00
-000190 5d40
-000191 940c 0195
-000193 e213
-000194 e203
-000195 93af
-000196 93bf
-000197 e0b1
-000198 e0a6
-000199 930d
-00019a 934d
-00019b 2711
-00019c 931c
-00019d 91bf
-00019e 91af
-00019f 911f
-0001a0 910f
-0001a1 914f                                      hex_to_dec_str_two_dig min_reg, min_str
-0001a2 935f
-0001a3 930f
-0001a4 931f
-0001a5 3654
-0001a6 f464
-0001a7 e01a
-0001a8 2700
-0001a9 1751
-0001aa f024
-0001ab 9503
-0001ac 1b51
-0001ad 940c 01a9
-0001af 5d00
-0001b0 5d50
-0001b1 940c 01b5
-0001b3 e213
-0001b4 e203
-0001b5 93af
-0001b6 93bf
-0001b7 e0b1
-0001b8 e0a9
-0001b9 930d
-0001ba 935d
-0001bb 2711
-0001bc 931c
-0001bd 91bf
-0001be 91af
-0001bf 911f
-0001c0 910f
-0001c1 915f                                      hex_to_dec_str_two_dig hour_reg, hour_str
+000166 933f
+000167 930f
+000168 931f
+000169 3634
+00016a f464
+00016b e01a
+00016c 2700
+00016d 1731
+00016e f024
+00016f 9503
+000170 1b31
+000171 940c 016d
+000173 5d00
+000174 5d30
+000175 940c 0179
+000177 e213
+000178 e203
+000179 93af
+00017a 93bf
+00017b e0b1
+00017c e0a3
+00017d 930d
+00017e 933d
+00017f 2711
+000180 931c
+000181 91bf
+000182 91af
+000183 911f
+000184 910f
+000185 913f                                      hex_to_dec_str_two_dig sec_reg, sec_str ; Convert and store time values
+000186 934f
+000187 930f
+000188 931f
+000189 3644
+00018a f464
+00018b e01a
+00018c 2700
+00018d 1741
+00018e f024
+00018f 9503
+000190 1b41
+000191 940c 018d
+000193 5d00
+000194 5d40
+000195 940c 0199
+000197 e213
+000198 e203
+000199 93af
+00019a 93bf
+00019b e0b1
+00019c e0a6
+00019d 930d
+00019e 934d
+00019f 2711
+0001a0 931c
+0001a1 91bf
+0001a2 91af
+0001a3 911f
+0001a4 910f
+0001a5 914f                                      hex_to_dec_str_two_dig min_reg, min_str
+0001a6 935f
+0001a7 930f
+0001a8 931f
+0001a9 3654
+0001aa f464
+0001ab e01a
+0001ac 2700
+0001ad 1751
+0001ae f024
+0001af 9503
+0001b0 1b51
+0001b1 940c 01ad
+0001b3 5d00
+0001b4 5d50
+0001b5 940c 01b9
+0001b7 e213
+0001b8 e203
+0001b9 93af
+0001ba 93bf
+0001bb e0b1
+0001bc e0a9
+0001bd 930d
+0001be 935d
+0001bf 2711
+0001c0 931c
+0001c1 91bf
+0001c2 91af
+0001c3 911f
+0001c4 910f
+0001c5 915f                                      hex_to_dec_str_two_dig hour_reg, hour_str
                                  
-0001c2 e000                                      ldi temp_r16, $00           ; Set cursor to Begining of first line
-0001c3 6800                                      ori temp_r16, lcd_SetCursor       ; convert the plain address to a set cursor instruction
-0001c4 940e 00e7                                 call lcd_write_instruction_4d
+0001c6 94f8                                      cli               ; This and the following sei keep the display commands from being interrupted
+0001c7 e000                                      ldi temp_r16, $00           ; Set cursor to Begining of first line
+0001c8 6800                                      ori temp_r16, lcd_SetCursor       ; convert the plain address to a set cursor instruction
+0001c9 940e 00eb                                 call lcd_write_instruction_4d
+0001cb 9478                                      sei
                                  
-0001c6 94f8                                      cli
-0001c7 930f
-0001c8 93af
-0001c9 93bf
-0001ca e0b1
-0001cb e0a9
-0001cc e000
-0001cd 940e 0206
-0001cf 91bf
-0001d0 91af
-0001d1 910f                                      disp_from_sram hour_str, clk_hr_loc
-0001d2 930f
-0001d3 93ef
-0001d4 93ff
-0001d5 e0f2
-0001d6 e0e5
-0001d7 e002
-0001d8 940e 00c9
-0001da 910f
-0001db 91ff
-0001dc 91ef                                      disp_from_pm colon_str, clk_cln1_loc
-0001dd 930f
-0001de 93af
-0001df 93bf
-0001e0 e0b1
-0001e1 e0a6
-0001e2 e003
-0001e3 940e 0206
-0001e5 91bf
-0001e6 91af
-0001e7 910f                                      disp_from_sram min_str, clk_mn_loc
-0001e8 930f
-0001e9 93ef
-0001ea 93ff
-0001eb e0f2
-0001ec e0e5
-0001ed e005
-0001ee 940e 00c9
-0001f0 910f
-0001f1 91ff
-0001f2 91ef                                      disp_from_pm colon_str, clk_cln2_loc
-0001f3 930f
-0001f4 93af
-0001f5 93bf
-0001f6 e0b1
-0001f7 e0a3
-0001f8 e006
-0001f9 940e 0206
-0001fb 91bf
-0001fc 91af
-0001fd 910f                                      disp_from_sram sec_str, clk_sc_loc
-0001fe 7f8b                                      andi pgm_sts, $FF - (1 << dsp_upd)
-0001ff e500                                      ldi temp_r16, 80
-000200 9478                                      sei
-000201 940e 0118                                 call delayTx1uS ; Must have an extra delay to avoid display glitches.
-000203 940c 015e                                 jmp wait_loop
+0001cc 94f8                                      cli
+0001cd 930f
+0001ce 93af
+0001cf 93bf
+0001d0 e0b1
+0001d1 e0a9
+0001d2 e000
+0001d3 940e 020c
+0001d5 91bf
+0001d6 91af
+0001d7 910f                                      disp_from_sram hour_str, clk_hr_loc ; Display each part of the clock
+0001d8 930f
+0001d9 93ef
+0001da 93ff
+0001db e0f2
+0001dc e0eb
+0001dd e002
+0001de 940e 00cd
+0001e0 910f
+0001e1 91ff
+0001e2 91ef                                      disp_from_pm colon_str, clk_cln1_loc
+0001e3 930f
+0001e4 93af
+0001e5 93bf
+0001e6 e0b1
+0001e7 e0a6
+0001e8 e003
+0001e9 940e 020c
+0001eb 91bf
+0001ec 91af
+0001ed 910f                                      disp_from_sram min_str, clk_mn_loc
+0001ee 930f
+0001ef 93ef
+0001f0 93ff
+0001f1 e0f2
+0001f2 e0eb
+0001f3 e005
+0001f4 940e 00cd
+0001f6 910f
+0001f7 91ff
+0001f8 91ef                                      disp_from_pm colon_str, clk_cln2_loc
+0001f9 930f
+0001fa 93af
+0001fb 93bf
+0001fc e0b1
+0001fd e0a3
+0001fe e006
+0001ff 940e 020c
+000201 91bf
+000202 91af
+000203 910f                                      disp_from_sram sec_str, clk_sc_loc
+000204 7f7b                                      andi pgm_sts, $FF - (1 << dsp_upd) ; Clear display update needed
+000205 e500                                      ldi temp_r16, 80
+000206 940e 011c                                 call delayTx1uS ; Must have an extra delay to avoid display glitches.
+000208 9478                                      sei
+000209 940c 0162                                 jmp wait_loop
                                  
                                  ;;; Program Constants
                                    .cseg
-000205 003a                      colon_str:      .db ":", 0
+00020b 003a                      colon_str:      .db ":", 0
                                  ;;; Function Libraries
                                    .cseg
                                    ;; .include "LCD-lib.asm"
@@ -2104,17 +2113,17 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\
                                  ; Notes:    The string must end with a null (0)
                                  ;           uses time delays instead of checking the busy flag
                                  lcd_write_string_4d_mem:
-000206 930f                                      push r16        ; Preserve Registers
+00020c 930f                                      push r16        ; Preserve Registers
                                  
                                  ; set up the initial DDRAM address
-000207 6800                                        ori r16, lcd_SetCursor     ; convert the plain address to a set cursor instruction
-000208 940e 00e7                                   call lcd_write_instruction_4d    ; set up the first DDRAM address
-00020a e500                                        ldi r16, 80                ; 40 uS delay (min)
-00020b 940e 0118                                   call delayTx1uS
+00020d 6800                                        ori r16, lcd_SetCursor     ; convert the plain address to a set cursor instruction
+00020e 940e 00eb                                   call lcd_write_instruction_4d    ; set up the first DDRAM address
+000210 e500                                        ldi r16, 80                ; 40 uS delay (min)
+000211 940e 011c                                   call delayTx1uS
                                  
-00020d 910f                                      pop r16
-00020e 940e 0211                                 call lcd_append_string_4d_mem
-000210 9508                                      ret
+000213 910f                                      pop r16
+000214 940e 0217                                 call lcd_append_string_4d_mem
+000216 9508                                      ret
                                  
                                  ;----------------------------------------------------------------------------
                                  ; Name:     lcd_append_string_4d_mem
@@ -2124,28 +2133,28 @@ C:\Users\roanm\Google Drive\School\Fall 2017\Computer Architechure\ca_final\src\
                                  ; Notes:    The string must end with a null (0)
                                  ;           uses time delays instead of checking the busy flag
                                  lcd_append_string_4d_mem:
-000211 930f                                      push r16        ; Preserve Registers
-000212 93bf                                        push XH
-000213 93af                                          push XL
+000217 930f                                      push r16        ; Preserve Registers
+000218 93bf                                        push XH
+000219 93af                                          push XL
                                  
                                  ; write the string of characters
                                  lcd_write_string_4d_mem_01:
-000214 910d                                            ld r16, X+                        ; get a character
-000215 3000                                            cpi r16,  0                        ; check for end of string
-000216 f031                                            breq lcd_write_string_4d_mem_02          ; done
+00021a 910d                                            ld r16, X+                        ; get a character
+00021b 3000                                            cpi r16,  0                        ; check for end of string
+00021c f031                                            breq lcd_write_string_4d_mem_02          ; done
                                  
                                  ; arrive here if this is a valid character
-000217 940e 00df                                       call lcd_write_character_4d          ; display the character
-000219 e500                                            ldi r16, 80                        ; 40 uS delay (min)
-00021a 940e 0118                                       call delayTx1uS
-00021c cff7                                            rjmp lcd_write_string_4d_mem_01          ; not done, send another character
+00021d 940e 00e3                                       call lcd_write_character_4d          ; display the character
+00021f e500                                            ldi r16, 80                        ; 40 uS delay (min)
+000220 940e 011c                                       call delayTx1uS
+000222 cff7                                            rjmp lcd_write_string_4d_mem_01          ; not done, send another character
                                  
                                  ; arrive here when all characters in the message have been sent to the LCD module
                                  lcd_write_string_4d_mem_02:
-00021d 91af                                          pop XL                              ; restore pointer registers
-00021e 91bf                                        pop XH
-00021f 910f                                      pop r16
-000220 9508                                      ret
+000223 91af                                          pop XL                              ; restore pointer registers
+000224 91bf                                        pop XH
+000225 910f                                      pop r16
+000226 9508                                      ret
 
 
 RESOURCE USE INFORMATION
@@ -2165,8 +2174,8 @@ counted separately from r26..r31 here.
 "ATmega328P" register use summary:
 x  :  10 y  :   0 z  :   1 r0 :   0 r1 :   0 r2 :   0 r3 :   0 r4 :   0 
 r5 :   0 r6 :   0 r7 :   0 r8 :   0 r9 :   0 r10:   0 r11:   0 r12:   0 
-r13:   0 r14:   0 r15:   0 r16: 130 r17:  26 r18:   4 r19:  14 r20:  17 
-r21:  14 r22:   7 r23:   0 r24:  13 r25:   0 r26:  20 r27:  20 r28:   5 
+r13:   0 r14:   0 r15:   0 r16: 132 r17:  26 r18:   4 r19:  14 r20:  17 
+r21:  14 r22:   7 r23:  13 r24:   0 r25:   0 r26:  20 r27:  20 r28:   5 
 r29:   5 r30:   9 r31:   9 
 Registers used: 16 out of 35 (45.7%)
 
@@ -2177,17 +2186,17 @@ brcc  :   0 brcs  :   0 break :   0 breq  :   3 brge  :   7 brhc  :   0
 brhs  :   0 brid  :   0 brie  :   0 brlo  :   5 brlt  :   6 brmi  :   0 
 brne  :   7 brpl  :   0 brsh  :   0 brtc  :   0 brts  :   0 brvc  :   0 
 brvs  :   0 bset  :   0 bst   :   0 call  :  47 cbi   :  10 cbr   :   0 
-clc   :   0 clh   :   0 cli   :   1 cln   :   0 clr   :  19 cls   :   0 
+clc   :   0 clh   :   0 cli   :   3 cln   :   0 clr   :  19 cls   :   0 
 clt   :   0 clv   :   0 clz   :   0 com   :   0 cp    :   3 cpc   :   0 
 cpi   :  21 cpse  :   0 dec   :   2 eor   :   1 fmul  :   0 fmuls :   0 
-fmulsu:   0 icall :   0 ijmp  :   0 in    :   0 inc   :   9 jmp   :  19 
+fmulsu:   0 icall :   0 ijmp  :   0 in    :   0 inc   :   9 jmp   :  20 
 ld    :   1 ldd   :   0 ldi   :  77 lds   :   1 lpm   :   1 lsl   :   1 
 lsr   :   0 mov   :   3 movw  :   0 mul   :   0 muls  :   0 mulsu :   0 
-neg   :   0 nop   :   0 or    :   0 ori   :  10 out   :   4 pop   :  40 
-push  :  40 rcall :   0 ret   :  12 reti  :   3 rjmp  :   2 rol   :   1 
+neg   :   0 nop   :   0 or    :   0 ori   :  10 out   :   4 pop   :  41 
+push  :  41 rcall :   0 ret   :  12 reti  :   2 rjmp  :   2 rol   :   1 
 ror   :   0 sbc   :   0 sbci  :   0 sbi   :  12 sbic  :   0 sbis  :   0 
 sbiw  :   2 sbr   :   0 sbrc  :   0 sbrs  :   4 sec   :   0 seh   :   0 
-sei   :   3 sen   :   0 ser   :   0 ses   :   0 set   :   0 sev   :   0 
+sei   :   4 sen   :   0 ser   :   0 ses   :   0 set   :   0 sev   :   0 
 sez   :   0 sleep :   0 spm   :   0 st    :   9 std   :   0 sts   :  13 
 sub   :   3 subi  :   8 swap  :   2 tst   :   0 wdr   :   0 
 Instructions used: 39 out of 113 (34.5%)
@@ -2195,7 +2204,7 @@ Instructions used: 39 out of 113 (34.5%)
 "ATmega328P" memory use summary [bytes]:
 Segment   Begin    End      Code   Data   Used    Size   Use%
 ---------------------------------------------------------------
-[.cseg] 0x000000 0x000442    996      2    998   32768   3.0%
+[.cseg] 0x000000 0x00044e   1008      2   1010   32768   3.1%
 [.dseg] 0x000100 0x00010c      0     12     12    2048   0.6%
 [.eseg] 0x000000 0x000000      0      0      0    1024   0.0%
 
